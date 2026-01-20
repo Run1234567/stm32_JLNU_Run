@@ -8,10 +8,7 @@
 2. **人话编程**：用 `C13` 代替 `GPIO_Pin_13`，用 `RUN_TIM6` 代替定时器结构体。
 3. **回调机制**：中断函数直接在 `main.c` 绑定，无需去 `it.c` 文件里翻找。
 
-## **⚡️ 效率对比 (点灯为例)**| 标准库 | RUN库 |  
-|--------|-------|  
-| 15行代码 | 2行代码 |  
-| 需要配置时钟、GPIO、中断等 | 自动完成，一行代码搞定 |Tab
+## **⚡️ 效率对比 (点灯为例)**
 
 * **❌ 传统标准库 (5步)**： 开时钟 -> 定义结构体 -> 配引脚 -> 配模式 -> 配速度 -> 初始化。
 * **✅ RUN库 (1步)**：
@@ -21,7 +18,9 @@
   RUN_gpio_init(C13, GPO, 0); // PC13推挽输出，默认低电平
   ```
 
-* ```
+## 📞 联系方式  有问题？想吐槽？欢迎来这里找我：
+
+#### * 📧 **Email**: \`2046138442@qq.com\`
 
 ## **🛠 功能全家桶**
 
@@ -32,6 +31,7 @@
 ## **🚀 一句话总结**
 
 如果你想拥有 STM32 的性能，又不想被底层寄存器折磨，**用 RUN库 就对了**。
+
 
 # 目录 (Table of Contents)
 
@@ -78,34 +78,34 @@
 
 int main(void)
 {
-// --- 1. 初始化 ---
+    // --- 1. 初始化 ---
+  
+    // 初始化 LED (PC13): 推挽输出 (GPO), 默认输出高电平 (1-灭)
+    RUN_gpio_init(C13, GPO, 1);
 
-// 初始化 LED (PC13): 推挽输出 (GPO), 默认输出高电平 (1-灭)
-RUN_gpio_init(C13, GPO, 1);
+    // 初始化 按键 (PA0): 上拉输入 (GPI_PU), 默认电平填 0 即可 (输入模式无效)
+    RUN_gpio_init(A0, GPI_PU, 0);
 
-// 初始化 按键 (PA0): 上拉输入 (GPI_PU), 默认电平填 0 即可 (输入模式无效)
-RUN_gpio_init(A0, GPI_PU, 0);
-
-while (1)
-{
-// --- 2. 读取输入 ---
-// 如果按键被按下 (读取到低电平 0)
-if (RUN_gpio_get(A0) == 0)
-{
-    // 简单的延时消抖
-    for(volatile int i=0; i<5000; i++);
-
-    if (RUN_gpio_get(A0) == 0)
+    while (1)
     {
-        // --- 3. 翻转输出 ---
-        // 翻转 PC13 电平，让 LED 闪烁
-        RUN_gpio_toggle(C13);
+        // --- 2. 读取输入 ---
+        // 如果按键被按下 (读取到低电平 0)
+        if (RUN_gpio_get(A0) == 0)
+        {
+            // 简单的延时消抖
+            for(volatile int i=0; i<5000; i++);
 
-        // 等待按键松开
-        while(RUN_gpio_get(A0) == 0);
+            if (RUN_gpio_get(A0) == 0)
+            {
+                // --- 3. 翻转输出 ---
+                // 翻转 PC13 电平，让 LED 闪烁
+                RUN_gpio_toggle(C13);
+
+                // 等待按键松开
+                while(RUN_gpio_get(A0) == 0);
+            }
+        }
     }
-}
-}
 }
 ```
 
@@ -122,11 +122,13 @@ void RUN_gpio_init(RUN_GPIO_enum pin, RUN_GPIO_Mode mode, uint8_t default_level)
 ```
 
 
-| **参数**           | **说明**                                                    |
+| 参数               | 说明                                                        |
 | ------------------ | ----------------------------------------------------------- |
 | **pin**            | 引脚编号。格式为`Port`+`Pin`，例如：`A0`,`B12`,`C13`。      |
 | **mode**           | 引脚工作模式（见下文参数速查表）。                          |
 | **default\_level** | **仅输出模式有效**。初始化后的默认电平：`0`(低) 或`1`(高)。 |
+
+Export to Sheets
 
 > **注意**：调用此函数会自动开启该引脚所属端口的 RCC 时钟，无需手动配置。
 
@@ -140,8 +142,8 @@ void RUN_gpio_set(RUN_GPIO_enum pin, uint8_t level);
 
 * **功能**：将指定引脚置为高电平或低电平。
 * **参数**：
-* `pin`: 如 `A5`, `D2`。
-* `level`: `1` (高电平/Set), `0` (低电平/Reset)。
+  * `pin`: 如 `A5`, `D2`。
+  * `level`: `1` (高电平/Set), `0` (低电平/Reset)。
 
 ### 3.3 翻转输出电平 `RUN_gpio_toggle`
 
@@ -173,18 +175,20 @@ uint8_t RUN_gpio_get(RUN_GPIO_enum pin);
 直接使用 `端口号` + `引脚号` 的组合：
 
 
-| **端口**  | **可用枚举范围** | **示例**                      |
-| --------- | ---------------- | ----------------------------- |
-| **GPIOA** | `A0`\~`A15`      | `RUN_gpio_set(A8, 1);`        |
-| **GPIOB** | `B0`\~`B15`      | `RUN_gpio_toggle(B1);`        |
-| **GPIOC** | `C0`\~`C15`      | `RUN_gpio_init(C13, GPO, 1);` |
-| ...       | ...              | ...                           |
-| **GPIOG** | `G0`\~`G15`      |                               |
+| 端口      | 可用枚举范围 | 示例                          |
+| --------- | ------------ | ----------------------------- |
+| **GPIOA** | `A0`\~`A15`  | `RUN_gpio_set(A8, 1);`        |
+| **GPIOB** | `B0`\~`B15`  | `RUN_gpio_toggle(B1);`        |
+| **GPIOC** | `C0`\~`C15`  | `RUN_gpio_init(C13, GPO, 1);` |
+| ...       | ...          | ...                           |
+| **GPIOG** | `G0`\~`G15`  |                               |
+
+Export to Sheets
 
 ### 4.2 模式枚举 (`mode`)
 
 
-| **枚举值**   | **对应标准库模式**      | **说明**     | **适用场景**           |
+| 枚举值       | 对应标准库模式          | 说明         | 适用场景               |
 | ------------ | ----------------------- | ------------ | ---------------------- |
 | **`GPO`**    | `GPIO_Mode_Out_PP`      | **推挽输出** | LED、继电器、蜂鸣器    |
 | **`GPO_OD`** | `GPIO_Mode_Out_OD`      | **开漏输出** | I2C 数据线、电平转换   |
@@ -226,22 +230,22 @@ RUN_delay_init(72);
 
 int main(void)
 {
-// 1. 初始化延时模块 (主频 72MHz)
-RUN_delay_init(72);
+    // 1. 初始化延时模块 (主频 72MHz)
+    RUN_delay_init(72);
 
-// 2. 初始化 GPIO
-RUN_gpio_init(C13, GPO, 1);
+    // 2. 初始化 GPIO
+    RUN_gpio_init(C13, GPO, 1);
 
-while (1)
-{
-RUN_gpio_toggle(C13); // 翻转 LED
+    while (1)
+    {
+        RUN_gpio_toggle(C13); // 翻转 LED
 
-// 毫秒延时：500ms
-RUN_delay_ms(500);
-
-// 微秒延时：50us (模拟短时间时序)
-RUN_delay_us(50); 
-}
+        // 毫秒延时：500ms
+        RUN_delay_ms(500);
+      
+        // 微秒延时：50us (模拟短时间时序)
+        RUN_delay_us(50); 
+    }
 }
 ```
 
@@ -260,8 +264,8 @@ void RUN_delay_init(uint8_t sysclk_mhz);
 ```
 
 * **sysclk\_mhz**: 系统主频 (MHz)。
-* STM32F103 通常填 `72`。
-* STM32F103 (内部时钟) 可能填 `64` 或 `8`。
+  * STM32F103 通常填 `72`。
+  * STM32F103 (内部时钟) 可能填 `64` 或 `8`。
 
 ### 3.2 微秒延时 `RUN_delay_us`
 
@@ -309,7 +313,7 @@ void RUN_delay_ms(uint16_t nms);
 
 ## 2. 快速上手
 
-# 2.1 基础发送与接收
+### 2.1 基础发送与接收
 
 **C**
 
@@ -319,28 +323,28 @@ void RUN_delay_ms(uint16_t nms);
 
 int main(void)
 {
-// 1. 初始化串口 1 (使用 PA9/PA10 引脚)
-// 波特率: 115200, 中断: 0 (关闭接收中断)
-RUN_uart_init(UART1_TX_PA9_RX_PA10, 115200, 0);
+    // 1. 初始化串口 1 (使用 PA9/PA10 引脚)
+    // 波特率: 115200, 中断: 0 (关闭接收中断)
+    RUN_uart_init(UART1_TX_PA9_RX_PA10, 115200, 0);
 
-// 2. 发送字符串
-RUN_uart_putstr(UART1_TX_PA9_RX_PA10, "System Start...\r\n");
+    // 2. 发送字符串
+    RUN_uart_putstr(UART1_TX_PA9_RX_PA10, "System Start...\r\n");
+  
+    // 3. 使用 printf (默认重定向到枚举列表的第0个串口，即 UART1_PA9_PA10)
+    printf("Init Success! Baudrate: %d\r\n", 115200);
 
-// 3. 使用 printf (默认重定向到枚举列表的第0个串口，即 UART1_PA9_PA10)
-printf("Init Success! Baudrate: %d\r\n", 115200);
-
-while (1)
-{
-// 查询是否收到数据 (非阻塞)
-if (RUN_uart_query(UART1_TX_PA9_RX_PA10))
-{
-    // 读取一个字节
-    uint8_t dat = RUN_uart_getchar(UART1_TX_PA9_RX_PA10);
-
-    // 将收到的数据回传 (Echo)
-    RUN_uart_putchar(UART1_TX_PA9_RX_PA10, dat);
-}
-}
+    while (1)
+    {
+        // 查询是否收到数据 (非阻塞)
+        if (RUN_uart_query(UART1_TX_PA9_RX_PA10))
+        {
+            // 读取一个字节
+            uint8_t dat = RUN_uart_getchar(UART1_TX_PA9_RX_PA10);
+          
+            // 将收到的数据回传 (Echo)
+            RUN_uart_putchar(UART1_TX_PA9_RX_PA10, dat);
+        }
+    }
 }
 ```
 
@@ -370,8 +374,8 @@ void RUN_uart_init(UART_PIN_enum uart_pin, uint32_t baud_rate, uint8_t enable_it
 * **uart\_pin**: 硬件方案枚举（见下表）。
 * **baud\_rate**: 波特率（如 9600, 115200）。
 * **enable\_it**:
-* `0`: 轮询模式，禁用中断。
-* `1`: 开启接收中断 (`USART_IT_RXNE`) 并配置 NVIC。**注意**：开启后需在 `stm32f10x_it.c` 或 `main.c` 中自行编写对应的中断服务函数（如 `USART1_IRQHandler`）。
+  * `0`: 轮询模式，禁用中断。
+  * `1`: 开启接收中断 (`USART_IT_RXNE`) 并配置 NVIC。**注意**：开启后需在 `stm32f10x_it.c` 或 `main.c` 中自行编写对应的中断服务函数（如 `USART1_IRQHandler`）。
 
 ### 3.2 数据发送
 
@@ -418,18 +422,16 @@ void RUN_uart_init(UART_PIN_enum uart_pin, uint32_t baud_rate, uint8_t enable_it
 
 1. **Printf 的使用限制**：
 
-* 代码中 `fputc` 强制写死了 `RUN_uart_putchar((UART_PIN_enum)0, ...)`。这意味着 `printf`**只能** 输出到 `UART_PIN_enum` 定义的第一个串口（即 `UART1_TX_PA9_RX_PA10`）。
-* 如果你使用 Keil MDK，**必须**在工程选项 "Target" 标签页中勾选 **"Use MicroLIB"**，否则程序会卡死在启动代码中。
-
+   * 代码中 `fputc` 强制写死了 `RUN_uart_putchar((UART_PIN_enum)0, ...)`。这意味着 `printf`**只能** 输出到 `UART_PIN_enum` 定义的第一个串口（即 `UART1_TX_PA9_RX_PA10`）。
+   * 如果你使用 Keil MDK，**必须**在工程选项 "Target" 标签页中勾选 **"Use MicroLIB"**，否则程序会卡死在启动代码中。
 2. **中断服务函数**：
 
-* 驱动仅负责开启中断开关（NVIC 和 USART\_IT\_RXNE）。
-* **你必须**在项目中手动编写 `void USART1_IRQHandler(void)` 等函数来处理接收逻辑。
-
+   * 驱动仅负责开启中断开关（NVIC 和 USART\_IT\_RXNE）。
+   * **你必须**在项目中手动编写 `void USART1_IRQHandler(void)` 等函数来处理接收逻辑。
 3. **阻塞风险**：
 
-* `RUN_uart_getchar` 是**死等**模式（`while` 循环等待标志位）。在主循环中使用时，务必先用 `RUN_uart_query` 判断是否有数据，防止程序卡死。
-  er(void)` 函数，以处理 UART 接收中断并实现数据的正确接收与处理。
+   * `RUN_uart_getchar` 是**死等**模式（`while` 循环等待标志位）。在主循环中使用时，务必先用 `RUN_uart_query` 判断是否有数据，防止程序卡死。
+
 
 # STM32 定时器中断驱动模块使用说明
 
@@ -459,17 +461,17 @@ void RUN_uart_init(UART_PIN_enum uart_pin, uint32_t baud_rate, uint8_t enable_it
 
 int main(void)
 {
-// 1. 初始化 GPIO (LED)
-RUN_gpio_init(C13, GPO, 1);
+    // 1. 初始化 GPIO (LED)
+    RUN_gpio_init(C13, GPO, 1);
 
-// 2. 初始化定时器 6
-// 设置为 500ms 触发一次中断
-RUN_timer_init(RUN_TIM6, 500);
+    // 2. 初始化定时器 6
+    // 设置为 500ms 触发一次中断
+    RUN_timer_init(RUN_TIM6, 500);
 
-while (1)
-{
-    // 主循环可以处理其他事情，LED 翻转在中断里进行
-}
+    while (1)
+    {
+        // 主循环可以处理其他事情，LED 翻转在中断里进行
+    }
 }
 
 // ==========================================================
@@ -478,16 +480,16 @@ while (1)
 // 注意：函数名必须是固定的 (见下文速查表)
 void TIM6_IRQHandler(void)
 {
-// 检查更新中断标志位
-if (TIM_GetITStatus(TIM6, TIM_IT_Update) != RESET)
-{
-    // --- 用户逻辑开始 ---
-    RUN_gpio_toggle(C13); // 翻转 LED
-    // --- 用户逻辑结束 ---
+    // 检查更新中断标志位
+    if (TIM_GetITStatus(TIM6, TIM_IT_Update) != RESET)
+    {
+        // --- 用户逻辑开始 ---
+        RUN_gpio_toggle(C13); // 翻转 LED
+        // --- 用户逻辑结束 ---
 
-    // 必须清除标志位！否则会死循环进入中断
-    TIM_ClearITPendingBit(TIM6, TIM_IT_Update);
-}
+        // 必须清除标志位！否则会死循环进入中断
+        TIM_ClearITPendingBit(TIM6, TIM_IT_Update);
+    }
 }
 ```
 
@@ -505,7 +507,7 @@ void RUN_timer_init(RUN_TIM_enum tim_n, uint16_t time_ms);
 
 * **tim\_n**: 定时器枚举（如 `RUN_TIM6`）。
 * **time\_ms**: 中断周期，单位毫秒 (ms)。
-* **重要限制**：由于 STM32F103 的定时器是 16 位的，在默认分频策略下，最大定时周期约为 **6500ms (6.5秒)**。如果超过此值，定时器会溢出导致时间不准。
+  * **重要限制**：由于 STM32F103 的定时器是 16 位的，在默认分频策略下，最大定时周期约为 **6500ms (6.5秒)**。如果超过此值，定时器会溢出导致时间不准。
 
 ### 3.2 控制定时器开关 `RUN_timer_cmd`
 
@@ -542,10 +544,8 @@ void RUN_timer_cmd(RUN_TIM_enum tim_n, FunctionalState state);
 
 1. **清除标志位**：在中断函数中，**必须**调用 `TIM_ClearITPendingBit(...)`，否则程序一旦退出中断会立刻再次进入，导致主程序卡死。
 2. **多模块冲突**：
-
-* TIM1 和 TIM8 是高级定时器，通常用于电机 PWM 控制。如果你的项目需要控制电机，请不要占用这两个定时器做普通的定时中断。
-* TIM2/3/4/5 经常用于编码器读取或 PWM 输出，资源紧张时请优先使用 TIM6/7。
-
+   * TIM1 和 TIM8 是高级定时器，通常用于电机 PWM 控制。如果你的项目需要控制电机，请不要占用这两个定时器做普通的定时中断。
+   * TIM2/3/4/5 经常用于编码器读取或 PWM 输出，资源紧张时请优先使用 TIM6/7。
 3. **最大时长限制**：输入参数 `time_ms` 不要超过 **6500**。如果需要更长的定时（比如 1 分钟），建议定一个 1000ms 的中断，然后在中断里用 `static int count` 变量累加计数。
 
 # STM32 PWM 驱动模块使用说明
@@ -572,25 +572,25 @@ void RUN_timer_cmd(RUN_TIM_enum tim_n, FunctionalState state);
 
 int main(void)
 {
-// 1. 初始化舵机 PWM (PA8 - TIM1_CH1)
-// 频率: 50Hz, 初始占空比: 7.5% (750/10000) -> 1.5ms
-RUN_pwm_init(PWM_TIM1_CH1_PA8, 50, 750);
+    // 1. 初始化舵机 PWM (PA8 - TIM1_CH1)
+    // 频率: 50Hz, 初始占空比: 7.5% (750/10000) -> 1.5ms
+    RUN_pwm_init(PWM_TIM1_CH1_PA8, 50, 750);
 
-// 2. 初始化电机 PWM (PA0 - TIM2_CH1)
-// 频率: 20kHz, 初始占空比: 0%
-RUN_pwm_init(PWM_TIM2_CH1_PA0, 20000, 0);
+    // 2. 初始化电机 PWM (PA0 - TIM2_CH1)
+    // 频率: 20kHz, 初始占空比: 0%
+    RUN_pwm_init(PWM_TIM2_CH1_PA0, 20000, 0);
 
-while (1)
-{
-// 动态加速
-for (int i = 0; i <= 10000; i += 100) 
-{
-    RUN_pwm_set(PWM_TIM2_CH1_PA0, i); // 设置占空比
-
-    // 简单延时
-    for(int d=0; d<10000; d++); 
-}
-}
+    while (1)
+    {
+        // 动态加速
+        for (int i = 0; i <= 10000; i += 100) 
+        {
+            RUN_pwm_set(PWM_TIM2_CH1_PA0, i); // 设置占空比
+          
+            // 简单延时
+            for(int d=0; d<10000; d++); 
+        }
+    }
 }
 ```
 
@@ -609,9 +609,9 @@ void RUN_pwm_init(RUN_PWM_enum pwm_ch, uint32_t freq, uint32_t duty);
 * **pwm\_ch**: 通道枚举（如 `PWM_TIM1_CH1_PA8`）。
 * **freq**: 目标频率 (Hz)。例如 `50` (舵机), `20000` (电机)。
 * **duty**: 初始占空比，范围 **0 \~ 10000**。
-* `0` = 0% (常低)
-* `5000` = 50%
-* `10000` = 100% (常高)
+  * `0` = 0% (常低)
+  * `5000` = 50%
+  * `10000` = 100% (常高)
 
 ### 3.2 设置占空比 `RUN_pwm_set`
 
@@ -673,17 +673,12 @@ void RUN_pwm_freq(RUN_PWM_enum pwm_ch, uint32_t freq);
 ## 5. 常见问题与注意事项
 
 1. **引脚冲突**：
-
-* **PA0/PA1/PA2/PA3** 同时被 TIM2 和 TIM5 使用。同一时间只能选择其中一个定时器初始化，否则会产生硬件冲突。
-* **TIM2 重映射 (PA15/PB3)**：代码会自动执行 `GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE)`。这意味着初始化这些引脚后，**J-Link/ST-Link 的 JTAG 模式将失效**，但 SWD 模式（两根线）通常不受影响。请确保下载器使用 SWD 接口。
-
+   * **PA0/PA1/PA2/PA3** 同时被 TIM2 和 TIM5 使用。同一时间只能选择其中一个定时器初始化，否则会产生硬件冲突。
+   * **TIM2 重映射 (PA15/PB3)**：代码会自动执行 `GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE)`。这意味着初始化这些引脚后，**J-Link/ST-Link 的 JTAG 模式将失效**，但 SWD 模式（两根线）通常不受影响。请确保下载器使用 SWD 接口。
 2. **高级定时器 (TIM1/TIM8)**：
-
-* 这两个定时器有额外的 "死区控制" 和 "刹车功能"。本驱动默认开启了主输出 (MOE)，可以像普通定时器一样直接驱动电机。
-
+   * 这两个定时器有额外的 "死区控制" 和 "刹车功能"。本驱动默认开启了主输出 (MOE)，可以像普通定时器一样直接驱动电机。
 3. **最低频率限制**：
-
-* 由于算法使用 72MHz 主频，且 PSC 为 16 位，理论最低频率约为 **20Hz** (72M/65536/65536)。如果需要更低的频率，需要修改底层的时钟分频逻辑。
+   * 由于算法使用 72MHz 主频，且 PSC 为 16 位，理论最低频率约为 **20Hz** (72M/65536/65536)。如果需要更低的频率，需要修改底层的时钟分频逻辑。
 
 # STM32 EXTI 外部中断驱动模块使用说明
 
@@ -716,26 +711,26 @@ void RUN_pwm_freq(RUN_PWM_enum pwm_ch, uint32_t freq);
 // 1. 定义你的中断处理逻辑 (回调函数)
 void My_Key_Callback(void)
 {
-// 这里不需要清除标志位，驱动已经帮你清除了
-RUN_gpio_toggle(C13); // 翻转 LED
+    // 这里不需要清除标志位，驱动已经帮你清除了
+    RUN_gpio_toggle(C13); // 翻转 LED
 }
 
 int main(void)
 {
-// 初始化 LED
-RUN_gpio_init(C13, GPO, 1);
+    // 初始化 LED
+    RUN_gpio_init(C13, GPO, 1);
 
-// 2. 初始化外部中断 (PA0, 上升沿触发)
-// 触发模式可选: EXTI_Trigger_Rising, EXTI_Trigger_Falling, EXTI_Trigger_Rising_Falling
-RUN_exti_init(A0, EXTI_Trigger_Rising);
+    // 2. 初始化外部中断 (PA0, 上升沿触发)
+    // 触发模式可选: EXTI_Trigger_Rising, EXTI_Trigger_Falling, EXTI_Trigger_Rising_Falling
+    RUN_exti_init(A0, EXTI_Trigger_Rising);
 
-// 3. 挂载回调函数 (将 A0 中断指向 My_Key_Callback)
-RUN_exti_attach(A0, My_Key_Callback);
+    // 3. 挂载回调函数 (将 A0 中断指向 My_Key_Callback)
+    RUN_exti_attach(A0, My_Key_Callback);
 
-while (1)
-{
-// 主循环继续做其他事...
-}
+    while (1)
+    {
+        // 主循环继续做其他事...
+    }
 }
 ```
 
@@ -753,9 +748,9 @@ void RUN_exti_init(RUN_GPIO_enum pin, EXTITrigger_TypeDef trigger);
 
 * **pin**: 引脚枚举 (如 `A0`, `B5`, `C13`)。注意：此函数会自动将该引脚的 GPIO 模式配置为 **浮空输入 (IN\_FLOATING)**。
 * **trigger**: 触发方式 (标准库宏)。
-* `EXTI_Trigger_Rising`: 上升沿触发 (低 -> 高)
-* `EXTI_Trigger_Falling`: 下降沿触发 (高 -> 低)
-* `EXTI_Trigger_Rising_Falling`: 双边沿触发
+  * `EXTI_Trigger_Rising`: 上升沿触发 (低 -> 高)
+  * `EXTI_Trigger_Falling`: 下降沿触发 (高 -> 低)
+  * `EXTI_Trigger_Rising_Falling`: 双边沿触发
 
 ### 3.2 注册回调 `RUN_exti_attach`
 
@@ -787,7 +782,7 @@ void RUN_exti_detach(RUN_GPIO_enum pin);
 STM32 的硬件机制决定了**相同的引脚号不能同时使用**。
 
 * **错误示例**：同时使用 `A0` 和 `B0`。
-* 原因：它们都对应 `EXTI_Line0`，硬件选通器 (AFIO) 同一时间只能选择其中一个连接到 CPU。
+  * 原因：它们都对应 `EXTI_Line0`，硬件选通器 (AFIO) 同一时间只能选择其中一个连接到 CPU。
 * **正确示例**：使用 `A0` 和 `B1`。
 
 ### 4.2 不要自己写 IRQHandler
@@ -846,26 +841,26 @@ STM32 的硬件机制决定了**相同的引脚号不能同时使用**。
 
 int main(void)
 {
-// 1. 初始化 ADC (默认开启 ADC1)
-RUN_ADC_Init();
+    // 1. 初始化 ADC (默认开启 ADC1)
+    RUN_ADC_Init();
 
-// 注意：STM32 的 ADC 引脚建议配置为模拟输入 (AIN) 模式
-// 虽然复位状态下引脚是浮空输入也能用，但配置为 AIN 可以关闭数字触发器，降低功耗和噪声。
-// RUN_gpio_init(A0, AIN, 0); // 如果你有 RUN_Gpio 模块，建议加上这句
+    // 注意：STM32 的 ADC 引脚建议配置为模拟输入 (AIN) 模式
+    // 虽然复位状态下引脚是浮空输入也能用，但配置为 AIN 可以关闭数字触发器，降低功耗和噪声。
+    // RUN_gpio_init(A0, AIN, 0); // 如果你有 RUN_Gpio 模块，建议加上这句
 
-while (1)
-{
-// 2. 读取 PA0 电压值 (0 ~ 4095)
-uint16_t adc_val = RUN_ADC_Get(RUN_ADC_CH0_PA0);
-
-// 3. 换算为实际电压 (假设参考电压 3.3V)
-float voltage = (float)adc_val * 3.3f / 4095.0f;
-
-printf("PA0 Val: %d, Vol: %.2fv\r\n", adc_val, voltage);
-
-// 4. 使用滤波读取 (连续采 20 次取平均)
-uint16_t avg_val = RUN_ADC_Get_Average(RUN_ADC_CH0_PA0, 20);
-}
+    while (1)
+    {
+        // 2. 读取 PA0 电压值 (0 ~ 4095)
+        uint16_t adc_val = RUN_ADC_Get(RUN_ADC_CH0_PA0);
+      
+        // 3. 换算为实际电压 (假设参考电压 3.3V)
+        float voltage = (float)adc_val * 3.3f / 4095.0f;
+      
+        printf("PA0 Val: %d, Vol: %.2fv\r\n", adc_val, voltage);
+      
+        // 4. 使用滤波读取 (连续采 20 次取平均)
+        uint16_t avg_val = RUN_ADC_Get_Average(RUN_ADC_CH0_PA0, 20);
+    }
 }
 ```
 
@@ -945,19 +940,19 @@ uint16_t RUN_ADC_Get_Average(RUN_ADC_enum ch, uint8_t times);
 
 int main(void)
 {
-// 1. 初始化 DAC 通道 1 (对应引脚 PA4)
-RUN_DAC_Init(RUN_DAC_CH1_PA4);
+    // 1. 初始化 DAC 通道 1 (对应引脚 PA4)
+    RUN_DAC_Init(RUN_DAC_CH1_PA4);
 
-while (1)
-{
-// 2. 输出 1.5V 电压
-RUN_DAC_Set_Vol(RUN_DAC_CH1_PA4, 1.5f);
-
-// 延时一会儿...
-
-// 3. 输出最大电压 (3.3V)
-RUN_DAC_Set_Vol(RUN_DAC_CH1_PA4, 3.3f);
-}
+    while (1)
+    {
+        // 2. 输出 1.5V 电压
+        RUN_DAC_Set_Vol(RUN_DAC_CH1_PA4, 1.5f);
+      
+        // 延时一会儿...
+      
+        // 3. 输出最大电压 (3.3V)
+        RUN_DAC_Set_Vol(RUN_DAC_CH1_PA4, 3.3f);
+    }
 }
 ```
 
@@ -972,8 +967,8 @@ void RUN_DAC_Init(RUN_DAC_Channel_t channel);
 ```
 
 * **channel**:
-* `RUN_DAC_CH1_PA4`: 使用 PA4 引脚输出。
-* `RUN_DAC_CH2_PA5`: 使用 PA5 引脚输出。
+  * `RUN_DAC_CH1_PA4`: 使用 PA4 引脚输出。
+  * `RUN_DAC_CH2_PA5`: 使用 PA5 引脚输出。
 * **注意**: 初始化会自动配置 GPIO，无需额外调用 GPIO 驱动。
 
 ### 3.2 设置电压 `RUN_DAC_Set_Vol`
@@ -1002,20 +997,16 @@ void RUN_DAC_Set_Value(RUN_DAC_Channel_t channel, uint16_t val);
 ## 4. 注意事项
 
 1. **引脚冲突**：
-
-* **PA4** 和 **PA5** 既是 DAC 输出，也是 ADC 通道 4/5，还是 SPI1 的 NSS/SCK 引脚。
-* 一旦初始化为 DAC，请勿再将其作为普通 GPIO、ADC 输入或 SPI 接口使用。
-
-1. **驱动能力**：
-
-* STM32 的 DAC 输出阻抗较高，**驱动能力很弱**。
-* 如果需要驱动负载（如电机、喇叭、强光 LED），**必须**外部加装运放跟随器 (Buffer) 或驱动电路，否则电压会被拉低。
-
+   * **PA4** 和 **PA5** 既是 DAC 输出，也是 ADC 通道 4/5，还是 SPI1 的 NSS/SCK 引脚。
+   * 一旦初始化为 DAC，请勿再将其作为普通 GPIO、ADC 输入或 SPI 接口使用。
+2. **驱动能力**：
+   * STM32 的 DAC 输出阻抗较高，**驱动能力很弱**。
+   * 如果需要驱动负载（如电机、喇叭、强光 LED），**必须**外部加装运放跟随器 (Buffer) 或驱动电路，否则电压会被拉低。
 3. **参考电压**：
+   * 代码中写死计算基准为 `3.3f`。如果你的板子 VDDA/Vref+ 接的是 3.0V 或 2.5V，请修改 `RUN_DAC.c` 中的计算公式。
 
-* 代码中写死计算基准为 `3.3f`。如果你的板子 VDDA/Vref+ 接的是 3.0V 或 2.5V，请修改 `RUN_DAC.c` 中的计算公式。
 
-# TM32 硬件 SPI 驱动模块使用说明
+# STM32 硬件 SPI 驱动模块使用说明
 
 本模块支持 SPI1、SPI2 和 SPI3 的多种引脚组合。驱动会自动处理时钟开启、GPIO 复用配置以及 AFIO 重映射。
 
@@ -1044,26 +1035,26 @@ void RUN_DAC_Set_Value(RUN_DAC_Channel_t channel, uint16_t val);
 
 int main(void)
 {
-// 1. 初始化 CS 引脚 (推挽输出，默认拉高)
-RUN_gpio_init(CS_PIN, GPO, 1);
+    // 1. 初始化 CS 引脚 (推挽输出，默认拉高)
+    RUN_gpio_init(CS_PIN, GPO, 1);
 
-// 2. 初始化 SPI1 (SCK=PA5, MISO=PA6, MOSI=PA7)
-// 初始化后默认处于高速模式
-RUN_SPI_Init(RUN_SPI_1_PA5_PA6_PA7);
+    // 2. 初始化 SPI1 (SCK=PA5, MISO=PA6, MOSI=PA7)
+    // 初始化后默认处于高速模式
+    RUN_SPI_Init(RUN_SPI_1_PA5_PA6_PA7);
 
-while (1)
-{
-    // --- 发送/读取示例 ---
+    while (1)
+    {
+        // --- 发送/读取示例 ---
+      
+        // 1. 拉低片选，开始通信
+        RUN_gpio_set(CS_PIN, 0);
 
-    // 1. 拉低片选，开始通信
-    RUN_gpio_set(CS_PIN, 0);
+        // 2. 发送 0xAA，同时读取从机返回的数据
+        uint8_t received_data = RUN_SPI_ReadWriteByte(RUN_SPI_1_PA5_PA6_PA7, 0xAA);
 
-    // 2. 发送 0xAA，同时读取从机返回的数据
-    uint8_t received_data = RUN_SPI_ReadWriteByte(RUN_SPI_1_PA5_PA6_PA7, 0xAA);
-
-    // 3. 拉高片选，结束通信
-    RUN_gpio_set(CS_PIN, 1);
-}
+        // 3. 拉高片选，结束通信
+        RUN_gpio_set(CS_PIN, 1);
+    }
 }
 ```
 
@@ -1110,9 +1101,9 @@ void RUN_SPI_SetSpeed(RUN_SPI_Port_t port_group, uint8_t speed);
 ```
 
 * **speed 参数**：
-* `0`: **低速** (256分频) —— 约 280kHz (72M/256)。适合 SD 卡初始化。
-* `1`: **中速** (16分频) —— 约 4.5MHz。
-* `2`: **高速** (2分频) —— 约 36MHz (SPI1) 或 18MHz (SPI2/3)。
+  * `0`: **低速** (256分频) —— 约 280kHz (72M/256)。适合 SD 卡初始化。
+  * `1`: **中速** (16分频) —— 约 4.5MHz。
+  * `2`: **高速** (2分频) —— 约 36MHz (SPI1) 或 18MHz (SPI2/3)。
 * **场景**：SD 卡驱动通常先用低速初始化，成功后再切高速读写。
 
 ---
@@ -1181,22 +1172,22 @@ RUN_SoftI2C_Bus_t mpu_bus;
 
 int main(void)
 {
-// 2. 初始化总线 (SCL->PB6, SDA->PB7)
-// 驱动内部会自动调用 RUN_gpio_init 配置引脚为开漏输出
-RUN_I2C_Init(&mpu_bus, B6, B7);
+    // 2. 初始化总线 (SCL->PB6, SDA->PB7)
+    // 驱动内部会自动调用 RUN_gpio_init 配置引脚为开漏输出
+    RUN_I2C_Init(&mpu_bus, B6, B7);
 
-// 3. 写寄存器示例 (向 MPU6050 的 PWR_MGMT_1 寄存器 0x6B 写入 0x00 解除休眠)
-// 参数: &总线, 设备地址, 寄存器地址, 数据
-RUN_I2C_WriteReg(&mpu_bus, 0xD0, 0x6B, 0x00);
+    // 3. 写寄存器示例 (向 MPU6050 的 PWR_MGMT_1 寄存器 0x6B 写入 0x00 解除休眠)
+    // 参数: &总线, 设备地址, 寄存器地址, 数据
+    RUN_I2C_WriteReg(&mpu_bus, 0xD0, 0x6B, 0x00);
 
-while (1)
-{
-    // 4. 读寄存器示例 (读取 WHO_AM_I 寄存器 0x75)
-    uint8_t id = RUN_I2C_ReadReg(&mpu_bus, 0xD0, 0x75);
-
-    // 简单延时
-    RUN_delay_ms(100);
-}
+    while (1)
+    {
+        // 4. 读寄存器示例 (读取 WHO_AM_I 寄存器 0x75)
+        uint8_t id = RUN_I2C_ReadReg(&mpu_bus, 0xD0, 0x75);
+      
+        // 简单延时
+        RUN_delay_ms(100);
+    }
 }
 ```
 
@@ -1294,14 +1285,11 @@ RUN_I2C_Stop(&mpu_bus);
 ## 2. 硬件连接与注意事项
 
 1. **上拉电阻 (关键)**：
-
-* OneWire 总线空闲时必须为高电平。
-* 虽然代码中使用了 `GPIO_Mode_IPU` (内部上拉)，但 STM32 内部上拉电阻较弱 (约 40kΩ)。
-* **强烈建议**在数据线 (DQ) 和 VCC (3.3V) 之间接一个 **4.7kΩ 的外部上拉电阻**，以保证通信稳定。
-
+   * OneWire 总线空闲时必须为高电平。
+   * 虽然代码中使用了 `GPIO_Mode_IPU` (内部上拉)，但 STM32 内部上拉电阻较弱 (约 40kΩ)。
+   * **强烈建议**在数据线 (DQ) 和 VCC (3.3V) 之间接一个 **4.7kΩ 的外部上拉电阻**，以保证通信稳定。
 2. **时序敏感**：
-
-* 单总线对时间要求极高（微秒级）。如果在读写过程中被高优先级中断打断，会导致数据出错。
+   * 单总线对时间要求极高（微秒级）。如果在读写过程中被高优先级中断打断，会导致数据出错。
 
 ## 3. 快速上手 (以读取 DS18B20 为例)
 
@@ -1319,56 +1307,56 @@ RUN_I2C_Stop(&mpu_bus);
 
 int main(void)
 {
-// 1. 系统依赖初始化 (延时函数必须先初始化)
-RUN_delay_init(72);
+    // 1. 系统依赖初始化 (延时函数必须先初始化)
+    RUN_delay_init(72);
 
-// 2. 单总线初始化 (选中 PA0)
-RUN_OneWire_Init(DS18B20_PORT, DS18B20_PIN);
+    // 2. 单总线初始化 (选中 PA0)
+    RUN_OneWire_Init(DS18B20_PORT, DS18B20_PIN);
 
-// 3. 检测设备是否存在
-if (RUN_OneWire_Reset() == 0) 
-{
-    // 复位成功，设备在线
-    printf("Device Found!\r\n");
-}
-else
-{
-    printf("No Device!\r\n");
-}
+    // 3. 检测设备是否存在
+    if (RUN_OneWire_Reset() == 0) 
+    {
+        // 复位成功，设备在线
+        printf("Device Found!\r\n");
+    }
+    else
+    {
+        printf("No Device!\r\n");
+    }
 
-while (1)
-{
-    // --- DS18B20 温度读取流程 ---
-
-    // Step 1: 复位
-    RUN_OneWire_Reset();
-    // Step 2: 跳过 ROM (0xCC) - 假设总线上只有一个设备
-    RUN_OneWire_WriteByte(0xCC);
-    // Step 3: 启动温度转换 (0x44)
-    RUN_OneWire_WriteByte(0x44);
-
-    // 等待转换完成 (DS18B20 12位精度最长需 750ms)
-    RUN_delay_ms(750);
-
-    // Step 4: 再次复位
-    RUN_OneWire_Reset();
-    // Step 5: 跳过 ROM
-    RUN_OneWire_WriteByte(0xCC);
-    // Step 6: 读取暂存器 (0xBE)
-    RUN_OneWire_WriteByte(0xBE);
-
-    // Step 7: 读取两个字节 (低8位, 高8位)
-    uint8_t LSB = RUN_OneWire_ReadByte();
-    uint8_t MSB = RUN_OneWire_ReadByte();
-
-    // 合成温度值
-    int16_t temp_raw = (MSB << 8) | LSB;
-    float temperature = (float)temp_raw * 0.0625;
-
-    printf("Temp: %.2f C\r\n", temperature);
-
-    RUN_delay_ms(200);
-}
+    while (1)
+    {
+        // --- DS18B20 温度读取流程 ---
+      
+        // Step 1: 复位
+        RUN_OneWire_Reset();
+        // Step 2: 跳过 ROM (0xCC) - 假设总线上只有一个设备
+        RUN_OneWire_WriteByte(0xCC);
+        // Step 3: 启动温度转换 (0x44)
+        RUN_OneWire_WriteByte(0x44);
+      
+        // 等待转换完成 (DS18B20 12位精度最长需 750ms)
+        RUN_delay_ms(750);
+      
+        // Step 4: 再次复位
+        RUN_OneWire_Reset();
+        // Step 5: 跳过 ROM
+        RUN_OneWire_WriteByte(0xCC);
+        // Step 6: 读取暂存器 (0xBE)
+        RUN_OneWire_WriteByte(0xBE);
+      
+        // Step 7: 读取两个字节 (低8位, 高8位)
+        uint8_t LSB = RUN_OneWire_ReadByte();
+        uint8_t MSB = RUN_OneWire_ReadByte();
+      
+        // 合成温度值
+        int16_t temp_raw = (MSB << 8) | LSB;
+        float temperature = (float)temp_raw * 0.0625;
+      
+        printf("Temp: %.2f C\r\n", temperature);
+      
+        RUN_delay_ms(200);
+    }
 }
 ```
 
@@ -1397,8 +1385,8 @@ uint8_t RUN_OneWire_Reset(void);
 
 * **功能**：发送复位脉冲 (拉低 480us)，然后检测是否有从机发送“存在脉冲” (Presence Pulse)。
 * **返回值**：
-* `0`: 检测到设备 (成功)。
-* `1`: 无响应 (失败，线路断开或设备损坏)。
+  * `0`: 检测到设备 (成功)。
+  * `1`: 无响应 (失败，线路断开或设备损坏)。
 * **时序图**：
 
 ### 4.3 写字节 `RUN_OneWire_WriteByte`
@@ -1436,9 +1424,8 @@ uint8_t RUN_OneWire_ReadByte(void);
 * **场景**：如果你有 PA0 接了一个 DS18B20，PB5 接了另一个 DS18B20。
 * **错误做法**：初始化 PA0，初始化 PB5，然后交替读写。
 * **正确做法**：
-
-1. `RUN_OneWire_Init(GPIOA, GPIO_Pin_0);` -> 读写 PA0。
-2. `RUN_OneWire_Init(GPIOB, GPIO_Pin_5);` -> 读写 PB5。
+  1. `RUN_OneWire_Init(GPIOA, GPIO_Pin_0);` -> 读写 PA0。
+  2. `RUN_OneWire_Init(GPIOB, GPIO_Pin_5);` -> 读写 PB5。
 
 ### 5.2 延时精度
 
@@ -1471,44 +1458,44 @@ OneWire 对延时非常敏感。例如写 "1" 时，总线必须在拉低后 15u
 
 // 1. 定义参数结构体 (必须小于 2KB)
 typedef struct {
-float kp;
-float ki;
-float kd;
-uint8_t lcd_brightness;
-uint32_t boot_count; // 开机次数记录
+    float kp;
+    float ki;
+    float kd;
+    uint8_t lcd_brightness;
+    uint32_t boot_count; // 开机次数记录
 } SystemParams_t;
 
 SystemParams_t my_params;
 
 int main(void)
 {
-// --- 读取参数 (开机时) ---
-// 从偏移量 0 处读取结构体大小的数据
-RUN_Flash_Read(0, &my_params, sizeof(SystemParams_t));
+    // --- 读取参数 (开机时) ---
+    // 从偏移量 0 处读取结构体大小的数据
+    RUN_Flash_Read(0, &my_params, sizeof(SystemParams_t));
 
-// 如果参数全是 0xFF (第一次使用或被擦除)，则初始化默认值
-if (my_params.kp == 0xFFFFFFFF && my_params.ki == 0xFFFFFFFF) // 简单的判断逻辑
-{
-    my_params.kp = 1.5f;
-    my_params.ki = 0.05f;
-    my_params.kd = 0.01f;
-    my_params.lcd_brightness = 80;
-    my_params.boot_count = 0;
+    // 如果参数全是 0xFF (第一次使用或被擦除)，则初始化默认值
+    if (my_params.kp == 0xFFFFFFFF && my_params.ki == 0xFFFFFFFF) // 简单的判断逻辑
+    {
+        my_params.kp = 1.5f;
+        my_params.ki = 0.05f;
+        my_params.kd = 0.01f;
+        my_params.lcd_brightness = 80;
+        my_params.boot_count = 0;
+      
+        // 立即写入默认值
+        RUN_Flash_Write(0, &my_params, sizeof(SystemParams_t));
+    }
 
-    // 立即写入默认值
+    // 更新开机次数
+    my_params.boot_count++;
+  
+    // --- 保存参数 (关机前或修改参数后) ---
+    // 将修改后的结构体写回 Flash
     RUN_Flash_Write(0, &my_params, sizeof(SystemParams_t));
-}
 
-// 更新开机次数
-my_params.boot_count++;
-
-// --- 保存参数 (关机前或修改参数后) ---
-// 将修改后的结构体写回 Flash
-RUN_Flash_Write(0, &my_params, sizeof(SystemParams_t));
-
-while (1)
-{
-}
+    while (1)
+    {
+    }
 }
 ```
 
@@ -1623,34 +1610,34 @@ uint16_t adc_buffer[10]; // 存放数据的数组
 
 int main(void)
 {
-// 1. 初始化 ADC (确保 ADC 时钟开启)
-RUN_ADC_Init();
+    // 1. 初始化 ADC (确保 ADC 时钟开启)
+    RUN_ADC_Init();
 
-// 2. 配置 DMA
-// 通道: DMA1_Channel1 (查表得)
-// 外设: ADC1的数据寄存器地址 (&ADC1->DR)
-// 内存: 数组首地址
-// 数量: 10个
-// 方向: 外设 -> 内存 (P2M)
-// 宽度: 16位 (ADC数据是12位，占用半字)
-// 模式: 循环模式 (CIRCULAR) -> 采满10个自动回头覆盖，永远在更新
-RUN_DMA_Config(DMA1_Channel1, (uint32_t)&ADC1->DR, (uint32_t)adc_buffer, 10, 
-            RUN_DMA_DIR_P2M, RUN_DMA_WIDTH_16BIT, RUN_DMA_MODE_CIRCULAR);
+    // 2. 配置 DMA
+    // 通道: DMA1_Channel1 (查表得)
+    // 外设: ADC1的数据寄存器地址 (&ADC1->DR)
+    // 内存: 数组首地址
+    // 数量: 10个
+    // 方向: 外设 -> 内存 (P2M)
+    // 宽度: 16位 (ADC数据是12位，占用半字)
+    // 模式: 循环模式 (CIRCULAR) -> 采满10个自动回头覆盖，永远在更新
+    RUN_DMA_Config(DMA1_Channel1, (uint32_t)&ADC1->DR, (uint32_t)adc_buffer, 10, 
+                   RUN_DMA_DIR_P2M, RUN_DMA_WIDTH_16BIT, RUN_DMA_MODE_CIRCULAR);
 
-// 3. 开启 DMA 通道
-RUN_DMA_Enable(DMA1_Channel1);
+    // 3. 开启 DMA 通道
+    RUN_DMA_Enable(DMA1_Channel1);
 
-// 4. 【关键】开启 ADC 的 DMA 请求开关 (这步不能少！)
-// 告诉 ADC：“采集完数据不要放着，发个信号叫 DMA 来拿”
-ADC_DMACmd(ADC1, ENABLE);
+    // 4. 【关键】开启 ADC 的 DMA 请求开关 (这步不能少！)
+    // 告诉 ADC：“采集完数据不要放着，发个信号叫 DMA 来拿”
+    ADC_DMACmd(ADC1, ENABLE);
+  
+    // 5. 开启 ADC 转换 (如果是软件触发)
+    ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 
-// 5. 开启 ADC 转换 (如果是软件触发)
-ADC_SoftwareStartConvCmd(ADC1, ENABLE);
-
-while (1)
-{
-// 此时 adc_buffer 里的数据会自动更新，直接读数组即可
-}
+    while (1)
+    {
+        // 此时 adc_buffer 里的数据会自动更新，直接读数组即可
+    }
 }
 ```
 
@@ -1670,26 +1657,26 @@ char send_buff[] = "Hello DMA World!\r\n";
 
 int main(void)
 {
-// 1. 初始化串口
-RUN_uart_init(UART1_TX_PA9_RX_PA10, 115200, 0);
+    // 1. 初始化串口
+    RUN_uart_init(UART1_TX_PA9_RX_PA10, 115200, 0);
 
-// 2. 配置 DMA
-// 方向: 内存 -> 外设 (M2P)
-// 宽度: 8位 (串口发字节)
-// 模式: 单次模式 (NORMAL) -> 发完就停
-RUN_DMA_Config(DMA1_Channel4, (uint32_t)&USART1->DR, (uint32_t)send_buff, sizeof(send_buff), 
-            RUN_DMA_DIR_M2P, RUN_DMA_WIDTH_8BIT, RUN_DMA_MODE_NORMAL);
+    // 2. 配置 DMA
+    // 方向: 内存 -> 外设 (M2P)
+    // 宽度: 8位 (串口发字节)
+    // 模式: 单次模式 (NORMAL) -> 发完就停
+    RUN_DMA_Config(DMA1_Channel4, (uint32_t)&USART1->DR, (uint32_t)send_buff, sizeof(send_buff), 
+                   RUN_DMA_DIR_M2P, RUN_DMA_WIDTH_8BIT, RUN_DMA_MODE_NORMAL);
 
-// 3. 【关键】开启串口的 DMA 发送请求
-USART_DMACmd(USART1, USART_DMAReq_Tx, ENABLE);
+    // 3. 【关键】开启串口的 DMA 发送请求
+    USART_DMACmd(USART1, USART_DMAReq_Tx, ENABLE);
 
-// 4. 启动 DMA 发送
-RUN_DMA_Enable(DMA1_Channel4);
+    // 4. 启动 DMA 发送
+    RUN_DMA_Enable(DMA1_Channel4);
 
-while (1)
-{
-// 可以在这里做其他事，发送由 DMA 负责
-}
+    while (1)
+    {
+        // 可以在这里做其他事，发送由 DMA 负责
+    }
 }
 ```
 
@@ -1703,12 +1690,12 @@ while (1)
 
 ```
 void RUN_DMA_Config(DMA_Channel_TypeDef* DMAy_Channelx, 
-            uint32_t periph_addr, 
-            uint32_t memory_addr, 
-            uint16_t buffer_size, 
-            RUN_DMA_Dir_t direction, 
-            RUN_DMA_Width_t width, 
-            RUN_DMA_Mode_t mode);
+                    uint32_t periph_addr, 
+                    uint32_t memory_addr, 
+                    uint16_t buffer_size, 
+                    RUN_DMA_Dir_t direction, 
+                    RUN_DMA_Width_t width, 
+                    RUN_DMA_Mode_t mode);
 ```
 
 * **DMAy\_Channelx**: 硬件通道地址 (如 `DMA1_Channel1`)。**必须查表确认**。
@@ -1716,13 +1703,13 @@ void RUN_DMA_Config(DMA_Channel_TypeDef* DMAy_Channelx,
 * **memory\_addr**: 内存变量地址。通常是数组名 `(uint32_t)buffer`。
 * **buffer\_size**: 传输的数据个数 (注意不是字节数，而是“个”数，取决于 `width`)。
 * **direction**:
-* `RUN_DMA_DIR_P2M`: 外设 -> 内存 (ADC, 串口接收)
-* `RUN_DMA_DIR_M2P`: 内存 -> 外设 (DAC, 串口发送)
-* `RUN_DMA_DIR_M2M`: 内存 -> 内存 (数组拷贝)
+  * `RUN_DMA_DIR_P2M`: 外设 -> 内存 (ADC, 串口接收)
+  * `RUN_DMA_DIR_M2P`: 内存 -> 外设 (DAC, 串口发送)
+  * `RUN_DMA_DIR_M2M`: 内存 -> 内存 (数组拷贝)
 * **width**: 数据宽度 (8位/16位/32位)。**两端宽度必须一致**（例如 ADC 是 16位，内存数组也得是 `uint16_t`）。
 * **mode**:
-* `RUN_DMA_MODE_NORMAL`: 单次模式。搬运完 `buffer_size` 个数据后停止。
-* `RUN_DMA_MODE_CIRCULAR`: 循环模式。搬运完后自动重置指针，从头继续搬运（适合示波器、连续采集）。
+  * `RUN_DMA_MODE_NORMAL`: 单次模式。搬运完 `buffer_size` 个数据后停止。
+  * `RUN_DMA_MODE_CIRCULAR`: 循环模式。搬运完后自动重置指针，从头继续搬运（适合示波器、连续采集）。
 
 ### 3.2 启动传输 `RUN_DMA_Enable`
 
@@ -1759,24 +1746,17 @@ STM32F103 的 DMA 通道是固定的，**不能随意连接**。请根据下表�
 ## 5. 注意事项 (Pitfalls)
 
 1. **外设开关**：配置好 DMA 只是修好了路，你还需要打开外设的“发货开关”。
-
-* ADC 需要 `ADC_DMACmd`。
-* 串口 需要 `USART_DMACmd`。
-* DAC 需要 `DAC_DMACmd`。
-* **如果忘了这一步，DMA 永远不会启动。**
-
+   * ADC 需要 `ADC_DMACmd`。
+   * 串口 需要 `USART_DMACmd`。
+   * DAC 需要 `DAC_DMACmd`。
+   * **如果忘了这一步，DMA 永远不会启动。**
 2. **地址对齐与宽度**：
-
-* 如果 `width` 选 16位 (`RUN_DMA_WIDTH_16BIT`)，那么你的内存数组必须定义为 `uint16_t`，且地址通常要是偶数。
-* 不要尝试用 8位的 DMA 宽度去搬运 16位的 ADC 数据，会导致高低位错乱。
-
+   * 如果 `width` 选 16位 (`RUN_DMA_WIDTH_16BIT`)，那么你的内存数组必须定义为 `uint16_t`，且地址通常要是偶数。
+   * 不要尝试用 8位的 DMA 宽度去搬运 16位的 ADC 数据，会导致高低位错乱。
 3. **M2M 模式通道**：
-
-* STM32F1 的内存到内存 (M2M) 模式不限制通道，**任意** 空闲的 DMA 通道都可以使用（通常用没有外设连接的通道）。
-
+   * STM32F1 的内存到内存 (M2M) 模式不限制通道，**任意** 空闲的 DMA 通道都可以使用（通常用没有外设连接的通道）。
 4. **死循环风险**：
-
-* 本驱动代码中包含了 `RUN_DMA_Config`，它内部会自动处理时钟开启吗？查看代码片段，它似乎专注于寄存器配置。**建议在初始化代码中确保 `RCC_AHBPeriph_DMA1` 时钟已开启**。通常 `RUN_DMA_Config` 的完整实现会包含时钟开启，如果没包含，请手动调用 `RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);`。
+   * 本驱动代码中包含了 `RUN_DMA_Config`，它内部会自动处理时钟开启吗？查看代码片段，它似乎专注于寄存器配置。**建议在初始化代码中确保 `RCC_AHBPeriph_DMA1` 时钟已开启**。通常 `RUN_DMA_Config` 的完整实现会包含时钟开启，如果没包含，请手动调用 `RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);`。
 
 # STM32 AT24C02 (EEPROM) 驱动模块使用说明
 
@@ -1811,31 +1791,31 @@ RUN_AT24C02_t my_eeprom;
 
 int main(void)
 {
-// 2. 初始化延时模块 (如果是 STM32F1, 主频72M)
-RUN_delay_init(72);
+    // 2. 初始化延时模块 (如果是 STM32F1, 主频72M)
+    RUN_delay_init(72);
 
-// 3. 初始化 EEPROM
-// 参数: 句柄, SCL引脚, SDA引脚, 设备地址(通常0xA0)
-AT24C02_Init(&my_eeprom, B6, B7, 0xA0);
+    // 3. 初始化 EEPROM
+    // 参数: 句柄, SCL引脚, SDA引脚, 设备地址(通常0xA0)
+    AT24C02_Init(&my_eeprom, B6, B7, 0xA0);
 
-// 4. 写入数据
-// 在地址 0x05 处写入数据 0x66
-AT24C02_WriteByte(&my_eeprom, 0x05, 0x66);
+    // 4. 写入数据
+    // 在地址 0x05 处写入数据 0x66
+    AT24C02_WriteByte(&my_eeprom, 0x05, 0x66);
+  
+    // 注意: WriteByte 内部已经包含了 5ms 延时，这里不需要额外延时
 
-// 注意: WriteByte 内部已经包含了 5ms 延时，这里不需要额外延时
-
-while (1)
-{
-// 5. 读取数据
-uint8_t data = AT24C02_ReadByte(&my_eeprom, 0x05);
-
-// 验证读取结果
-if (data == 0x66) {
-    // 读取成功
-}
-
-RUN_delay_ms(1000);
-}
+    while (1)
+    {
+        // 5. 读取数据
+        uint8_t data = AT24C02_ReadByte(&my_eeprom, 0x05);
+      
+        // 验证读取结果
+        if (data == 0x66) {
+            // 读取成功
+        }
+      
+        RUN_delay_ms(1000);
+    }
 }
 ```
 
@@ -1854,8 +1834,8 @@ void AT24C02_Init(RUN_AT24C02_t *dev, RUN_GPIO_enum scl, RUN_GPIO_enum sda, uint
 * **dev**: 指向设备结构体的指针 (如 `&my_eeprom`)。
 * **scl / sda**: 连接的 GPIO 引脚枚举 (如 `B6`, `B7`)。
 * **addr**: 设备 8 位地址。
-* A0/A1/A2 全接地 -> `0xA0` (最常见)。
-* A0 接 VCC, 其他接地 -> `0xA2`。
+  * A0/A1/A2 全接地 -> `0xA0` (最常见)。
+  * A0 接 VCC, 其他接地 -> `0xA2`。
 
 ### 4.2 写一个字节 `AT24C02_WriteByte`
 
@@ -1906,6 +1886,7 @@ AT24C02 的容量是 **2K bit = 256 Byte**。
 2. **上拉电阻缺失**：I2C 是开漏输出，SCL/SDA 必须接上拉电阻 (4.7kΩ)，否则无法输出高电平。
 3. **地址错误**：检查芯片的 A0-A2 引脚电平是否与初始化时的 `addr` 参数匹配。
 
+
 # STM32 DS18B20 (Temperature Sensor) 驱动模块使用说明
 
 本模块用于驱动 Dallas/Maxim 的 DS18B20 数字温度传感器。它通过单总线 (1-Wire) 协议通信，只需要占用一个 GPIO 引脚即可读取高精度的温度数据。
@@ -1924,7 +1905,7 @@ DS18B20 也是开漏输出设备，因此 **DQ 引脚必须接上拉电阻**。
 * **GND**: 接地。
 * **DQ (Data)**: 连接到 STM32 的任意 GPIO。
 * **4.7kΩ 上拉电阻**: 连接在 **DQ** 和 **VCC** 之间。
-* *注意：如果你的模块 PCB 上已经集成了电阻（通常带 LED 的小模块都有），则不需要外接。如果是裸露的三脚元件，必须接电阻。*
+  * *注意：如果你的模块 PCB 上已经集成了电阻（通常带 LED 的小模块都有），则不需要外接。如果是裸露的三脚元件，必须接电阻。*
 
 ## 3. 快速上手
 
@@ -1941,29 +1922,29 @@ DS18B20 也是开漏输出设备，因此 **DQ 引脚必须接上拉电阻**。
 
 int main(void)
 {
-float temperature;
+    float temperature;
 
-// 1. 初始化延时模块
-RUN_delay_init(72);
+    // 1. 初始化延时模块
+    RUN_delay_init(72);
 
-// 2. 初始化 DS18B20
-// 参数: GPIO端口, GPIO引脚
-RUN_DS18B20_Init(GPIOA, GPIO_Pin_0);
+    // 2. 初始化 DS18B20
+    // 参数: GPIO端口, GPIO引脚
+    RUN_DS18B20_Init(GPIOA, GPIO_Pin_0);
 
-while (1)
-{
-// 3. 读取温度
-// 注意：函数内部包含启动转换指令
-temperature = RUN_DS18B20_GetTemp();
-
-// 打印结果 (需重定向 printf)
-printf("Current Temp: %.2f C\r\n", temperature);
-
-// 4. 采样间隔
-// DS18B20 转换一次温度最长需要 750ms (12位精度)
-// 建议读取间隔大于 1秒
-RUN_delay_ms(1000);
-}
+    while (1)
+    {
+        // 3. 读取温度
+        // 注意：函数内部包含启动转换指令
+        temperature = RUN_DS18B20_GetTemp();
+      
+        // 打印结果 (需重定向 printf)
+        printf("Current Temp: %.2f C\r\n", temperature);
+      
+        // 4. 采样间隔
+        // DS18B20 转换一次温度最长需要 750ms (12位精度)
+        // 建议读取间隔大于 1秒
+        RUN_delay_ms(1000);
+    }
 }
 ```
 
@@ -1992,12 +1973,11 @@ float RUN_DS18B20_GetTemp(void);
 
 * **返回值**: 浮点型温度值 (单位：摄氏度)。
 * **逻辑流程**:
-
-1. 复位总线 -> 跳过 ROM (0xCC) -> 发送温度转换命令 (0x44)。
-2. *(注意：代码中未阻塞等待 750ms，见下方常见问题)*。
-3. 复位总线 -> 跳过 ROM (0xCC) -> 发送读暂存器命令 (0xBE)。
-4. 读取低字节 (LSB) 和 高字节 (MSB)。
-5. 合并数据并乘以精度系数 (0.0625) 得到实际温度。
+  1. 复位总线 -> 跳过 ROM (0xCC) -> 发送温度转换命令 (0x44)。
+  2. *(注意：代码中未阻塞等待 750ms，见下方常见问题)*。
+  3. 复位总线 -> 跳过 ROM (0xCC) -> 发送读暂存器命令 (0xBE)。
+  4. 读取低字节 (LSB) 和 高字节 (MSB)。
+  5. 合并数据并乘以精度系数 (0.0625) 得到实际温度。
 
 ---
 
@@ -2008,16 +1988,16 @@ float RUN_DS18B20_GetTemp(void);
 * **原因**: 85°C 是 DS18B20 上电后的**默认复位值**。
 * **机制**: 传感器收到 "转换 (0x44)" 命令后，需要约 **750ms** (12位精度下) 来完成模拟量到数字量的转换。
 * **代码行为**: 当前提供的 `GetTemp` 函数发送转换命令后，**没有死等 750ms**，而是直接读取。
-* **现象**: 如果你读取速度非常快 (比如 10ms 一次)，你读回来的可能是**上一次**转换的结果，或者是上电默认值。
-* **解决**: 确保两次调用 `GetTemp` 的间隔在 1秒以上，或者在代码中取消 `RUN_delay_ms(750)` 的注释。
+  * **现象**: 如果你读取速度非常快 (比如 10ms 一次)，你读回来的可能是**上一次**转换的结果，或者是上电默认值。
+  * **解决**: 确保两次调用 `GetTemp` 的间隔在 1秒以上，或者在代码中取消 `RUN_delay_ms(750)` 的注释。
 
 ### 5.2 读取到 -127°C 或 0.0°C ？
 
 * **检查接线**:
-* **0.0°C**: 通常是 DQ 线短路到地，或者上拉电阻没接，导致总线一直为低电平。
-* **-127°C / 127°C**: 通常是总线断路 (一直高电平) 或 CRC 校验失败（虽然本驱动未开启CRC校验）。
+  * **0.0°C**: 通常是 DQ 线短路到地，或者上拉电阻没接，导致总线一直为低电平。
+  * **-127°C / 127°C**: 通常是总线断路 (一直高电平) 或 CRC 校验失败（虽然本驱动未开启CRC校验）。
 * **检查 OneWire 时序**: 单总线对时序要求微秒级精准。如果在读取过程中频繁发生中断 (如 SysTick 或 串口中断)，可能会打断时序导致读取乱码。
-* *高阶优化*: 在 `RUN_OneWire` 的读写字节函数中加入 `__disable_irq()` 和 `__enable_irq()` 保护临界区。
+  * *高阶优化*: 在 `RUN_OneWire` 的读写字节函数中加入 `__disable_irq()` 和 `__enable_irq()` 保护临界区。
 
 ### 5.3 多传感器挂载？
 
@@ -2035,9 +2015,9 @@ float RUN_DS18B20_GetTemp(void);
 
 * **静音驱动**：PWM 频率默认设为 **20kHz**。该频率超出了人耳听觉范围（20Hz\~20kHz），有效消除了传统低频 PWM (如 1kHz) 带来的刺耳电流啸叫声。
 * **统一量程**：速度输入范围统一为 **-10000 \~ +10000**。
-* `+` : 正转 (前进)
-* `-` : 反转 (后退)
-* `0` : 停止
+  * `+` : 正转 (前进)
+  * `-` : 反转 (后退)
+  * `0` : 停止
 * **对象化配置**：通过结构体数组一次性配置所有电机的 PWM 通道和方向引脚。
 
 ## 2. 硬件原理
@@ -2046,8 +2026,7 @@ float RUN_DS18B20_GetTemp(void);
 
 1. **PWM 引脚**：连接驱动模块的 `PWM` / `EN` 输入端 (控制速度)。
 2. **DIR 引脚**：连接驱动模块的 `IN1` / `DIR` 输入端 (控制方向)。
-
-* *注：如果你的驱动模块需要 IN1/IN2 双线控制方向，你需要将 IN2 接逻辑非门或在硬件上将本驱动的 DIR 配合另一个 GPIO 手动取反，或者本驱动仅支持单 DIR 引脚模式的驱动器。*
+   * *注：如果你的驱动模块需要 IN1/IN2 双线控制方向，你需要将 IN2 接逻辑非门或在硬件上将本驱动的 DIR 配合另一个 GPIO 手动取反，或者本驱动仅支持单 DIR 引脚模式的驱动器。*
 
 ## 3. 快速上手 (以 2WD 小车为例)
 
@@ -2065,36 +2044,36 @@ RUN_Car_t my_car;
 
 int main(void)
 {
-// 2. 配置小车参数
-my_car.motor_count = 2; // 双轮模式
+    // 2. 配置小车参数
+    my_car.motor_count = 2; // 双轮模式
 
-// 配置左轮 (Motor 0)
-my_car.motor[0].pwm_id  = PWM_TIM1_CH1_PA8; // 速度
-my_car.motor[0].dir_pin = C0;               // 方向
+    // 配置左轮 (Motor 0)
+    my_car.motor[0].pwm_id  = PWM_TIM1_CH1_PA8; // 速度
+    my_car.motor[0].dir_pin = C0;               // 方向
 
-// 配置右轮 (Motor 1)
-my_car.motor[1].pwm_id  = PWM_TIM1_CH2_PA9; // 速度
-my_car.motor[1].dir_pin = C1;               // 方向
+    // 配置右轮 (Motor 1)
+    my_car.motor[1].pwm_id  = PWM_TIM1_CH2_PA9; // 速度
+    my_car.motor[1].dir_pin = C1;               // 方向
 
-// 3. 初始化底盘 (内部自动初始化 PWM 和 GPIO)
-RUN_Car_Init(&my_car);
+    // 3. 初始化底盘 (内部自动初始化 PWM 和 GPIO)
+    RUN_Car_Init(&my_car);
 
-while (1)
-{
-// 4. 控制移动
+    while (1)
+    {
+        // 4. 控制移动
+      
+        // 前进 (速度 5000/10000 = 50%)
+        RUN_Car_Set2(&my_car, 5000, 5000);
+        RUN_delay_ms(1000);
 
-// 前进 (速度 5000/10000 = 50%)
-RUN_Car_Set2(&my_car, 5000, 5000);
-RUN_delay_ms(1000);
+        // 原地旋转 (左轮后退，右轮前进)
+        RUN_Car_Set2(&my_car, -3000, 3000);
+        RUN_delay_ms(1000);
 
-// 原地旋转 (左轮后退，右轮前进)
-RUN_Car_Set2(&my_car, -3000, 3000);
-RUN_delay_ms(1000);
-
-// 停止
-RUN_Car_Set2(&my_car, 0, 0);
-RUN_delay_ms(1000);
-}
+        // 停止
+        RUN_Car_Set2(&my_car, 0, 0);
+        RUN_delay_ms(1000);
+    }
 }
 ```
 
@@ -2156,6 +2135,7 @@ void RUN_Car_Set4(RUN_Car_t* car, int16_t speed1, int16_t speed2, int16_t speed3
 * 驱动默认使用 **20kHz** 是为了静音。
 * **警告**：部分老旧的或低端的电机驱动模块（如部分光耦隔离型）可能因光耦响应慢而无法支持 20kHz 的高频 PWM。如果发现电机无力或发热严重，请尝试在 `RUN_Moter_Brushed.c` 的初始化函数中将 `20000` 改为 `1000` 或 `50` 测试。
 
+
 # STM32 步进电机驱动模块使用说明
 
 本模块采用 **PUL (脉冲) + DIR (方向)** 的标准控制方式。通过改变 PWM 的频率来控制电机转速，通过 GPIO 电平控制旋转方向。
@@ -2177,8 +2157,7 @@ void RUN_Car_Set4(RUN_Car_t* car, int16_t speed1, int16_t speed2, int16_t speed3
 2. **DIR+ (Direction)**: 接 STM32 的 **GPIO 引脚**。
 3. **PUL- / DIR-**: 接 GND。
 4. **ENA+ / ENA-**: 通常**悬空不接**。
-
-* *注：大多数驱动器在 ENA 悬空时默认为“使能/锁轴”状态。如果接了线且给了有效电平，电机反而会脱机（无力矩）。*
+   * *注：大多数驱动器在 ENA 悬空时默认为“使能/锁轴”状态。如果接了线且给了有效电平，电机反而会脱机（无力矩）。*
 
 ## 3. 快速上手
 
@@ -2197,30 +2176,30 @@ RUN_Stepper_t my_stepper;
 
 int main(void)
 {
-// 2. 配置引脚参数
-my_stepper.pwm_pin = PWM_TIM1_CH1_PA8; // 脉冲脚 (必须是 PWM 支持引脚)
-my_stepper.dir_pin = C13;              // 方向脚 (任意 GPIO)
+    // 2. 配置引脚参数
+    my_stepper.pwm_pin = PWM_TIM1_CH1_PA8; // 脉冲脚 (必须是 PWM 支持引脚)
+    my_stepper.dir_pin = C13;              // 方向脚 (任意 GPIO)
 
-// 3. 初始化电机
-// 此时电机处于锁死状态 (Holding)，PWM=0
-RUN_Step_Init(&my_stepper);
+    // 3. 初始化电机
+    // 此时电机处于锁死状态 (Holding)，PWM=0
+    RUN_Step_Init(&my_stepper);
 
-while (1)
-{
-// 4. 正转 (1000Hz)
-// 假设细分设为 1600步/圈，则转速 = 1000/1600 * 60 = 37.5 RPM
-RUN_Step_SetSpeed(&my_stepper, 1000);
-RUN_delay_ms(2000);
+    while (1)
+    {
+        // 4. 正转 (1000Hz)
+        // 假设细分设为 1600步/圈，则转速 = 1000/1600 * 60 = 37.5 RPM
+        RUN_Step_SetSpeed(&my_stepper, 1000);
+        RUN_delay_ms(2000);
 
-// 5. 停止
-RUN_Step_SetSpeed(&my_stepper, 0);
-RUN_delay_ms(1000);
+        // 5. 停止
+        RUN_Step_SetSpeed(&my_stepper, 0);
+        RUN_delay_ms(1000);
 
-// 6. 反转 (2000Hz)
-// 注意：如果电机带负载，直接从 0 跳到 2000 可能会堵转 (详见注意事项)
-RUN_Step_SetSpeed(&my_stepper, -2000);
-RUN_delay_ms(2000);
-}
+        // 6. 反转 (2000Hz)
+        // 注意：如果电机带负载，直接从 0 跳到 2000 可能会堵转 (详见注意事项)
+        RUN_Step_SetSpeed(&my_stepper, -2000);
+        RUN_delay_ms(2000);
+    }
 }
 ```
 
@@ -2249,9 +2228,9 @@ void RUN_Step_SetSpeed(RUN_Stepper_t* motor, int32_t freq_hz);
 
 * **motor**: 电机对象指针。
 * **freq\_hz**: 脉冲频率 (Hz)。
-* **`> 0`**: **正转** (DIR引脚置 1, PWM 输出 50% 占空比)。
-* **`< 0`**: **反转** (DIR引脚置 0, PWM 输出 50% 占空比)。
-* **`= 0`**: **停止** (PWM 占空比设为 0，停止发送脉冲，电机保持锁死)。
+  * **`> 0`**: **正转** (DIR引脚置 1, PWM 输出 50% 占空比)。
+  * **`< 0`**: **反转** (DIR引脚置 0, PWM 输出 50% 占空比)。
+  * **`= 0`**: **停止** (PWM 占空比设为 0，停止发送脉冲，电机保持锁死)。
 
 ---
 
@@ -2261,7 +2240,7 @@ void RUN_Step_SetSpeed(RUN_Stepper_t* motor, int32_t freq_hz);
 
 * **现象**: 代码让电机以 5000Hz 运行，但电机只发出“滋滋”的高频啸叫声，轴不转动。
 * **原因**: 步进电机**不能瞬间启动到高才转速**。必须有一个“加速过程” (Ramp up)。
-* 例如：0Hz -> 500Hz -> 1000Hz -> ... -> 5000Hz。
+  * 例如：0Hz -> 500Hz -> 1000Hz -> ... -> 5000Hz。
 * **本驱动限制**: `SetSpeed` 函数是直接设置频率的。如果在主循环中直接给一个很大的值，电机大概率会堵转。你需要自己在应用层写一个 `for` 循环来缓慢增加频率。
 
 ### 5.2 转速计算公式
@@ -2273,14 +2252,15 @@ void RUN_Step_SetSpeed(RUN_Stepper_t* motor, int32_t freq_hz);
 * **StepsPerRev**: 电机固有步数，通常 1.8° 电机一圈是 **200** 步。
 * **Microsteps**: 驱动器拨码开关设定的细分 (如 1, 2, 4, 8, 16...)。
 * *示例*: 驱动器设为 8 细分，电机 1.8°。
-* 转一圈需要脉冲数 = **\$200 \\times 8 = 1600\$** 个。
-* 如果你给 **1600Hz**，电机转速就是 **60 RPM (1圈/秒)**。
+  * 转一圈需要脉冲数 = **\$200 \\times 8 = 1600\$** 个。
+  * 如果你给 **1600Hz**，电机转速就是 **60 RPM (1圈/秒)**。
 
 ### 5.3 为什么不转？
 
 1. **共阳/共阴接错**: 确认你的 `PUL-` 和 `DIR-` 是接地，还是 `PUL+` 和 `DIR+` 接了电源。本代码输出推挽信号，建议使用**共阴极接法** (信号线接 PUL+/DIR+，PUL-/DIR- 接地)。
 2. **频率太高**: 先尝试给 **500Hz** 测试，不要一开始就给 10kHz。
 3. **ENA 接线**: 拔掉 ENA 所有的线再试（悬空通常是最安全的使能状态）。
+
 
 # STM32 MPU6050 6轴姿态传感器驱动说明
 
@@ -2292,9 +2272,9 @@ void RUN_Step_SetSpeed(RUN_Stepper_t* motor, int32_t freq_hz);
 * **多机支持**：采用对象化设计 (`RUN_MPU6050_t`)，支持同一 MCU 挂载多个传感器。
 * **高效读取**：底层使用连续读 (Burst Read) 模式，一次通信读取 6 字节数据，提高效率。
 * **默认配置**：
-* **加速度量程**：**\$\\pm 2g\$**
-* **陀螺仪量程**：**\$\\pm 2000^\\circ/s\$**
-* **电源管理**：自动解除休眠，开启测量。
+  * **加速度量程**：**\$\\pm 2g\$**
+  * **陀螺仪量程**：**\$\\pm 2000^\\circ/s\$**
+  * **电源管理**：自动解除休眠，开启测量。
 
 ## 2. 硬件接线
 
@@ -2328,38 +2308,38 @@ RUN_MPU6050_t my_mpu;
 
 int main(void)
 {
-// 变量存储原始数据
-int16_t ax, ay, az;
-int16_t gx, gy, gz;
-float temp;
+    // 变量存储原始数据
+    int16_t ax, ay, az;
+    int16_t gx, gy, gz;
+    float temp;
 
-// 2. 初始化 (传入对象指针, SCL引脚, SDA引脚, 设备地址)
-// MPU_ADDR_DEFAULT 默认为 0xD0 (AD0接地)
-MPU6050_Init(&my_mpu, B6, B7, MPU_ADDR_DEFAULT);
+    // 2. 初始化 (传入对象指针, SCL引脚, SDA引脚, 设备地址)
+    // MPU_ADDR_DEFAULT 默认为 0xD0 (AD0接地)
+    MPU6050_Init(&my_mpu, B6, B7, MPU_ADDR_DEFAULT);
 
-// (可选) 检查 ID 确认通讯正常
-uint8_t id = MPU6050_Get_ID(&my_mpu);
-if(id != 0x68) {
-// 通讯失败或芯片错误
-}
+    // (可选) 检查 ID 确认通讯正常
+    uint8_t id = MPU6050_Get_ID(&my_mpu);
+    if(id != 0x68) {
+        // 通讯失败或芯片错误
+    }
 
-while (1)
-{
-// 3. 读取加速度 (原始值)
-MPU6050_Get_Accel(&my_mpu, &ax, &ay, &az);
+    while (1)
+    {
+        // 3. 读取加速度 (原始值)
+        MPU6050_Get_Accel(&my_mpu, &ax, &ay, &az);
 
-// 4. 读取角速度 (原始值)
-MPU6050_Get_Gyro(&my_mpu, &gx, &gy, &gz);
+        // 4. 读取角速度 (原始值)
+        MPU6050_Get_Gyro(&my_mpu, &gx, &gy, &gz);
 
-// 5. 读取温度 (摄氏度)
-temp = MPU6050_Get_Temp(&my_mpu);
+        // 5. 读取温度 (摄氏度)
+        temp = MPU6050_Get_Temp(&my_mpu);
 
-// 打印数据 (需要重定向 printf)
-printf("Accel: %d, %d, %d\r\n", ax, ay, az);
-printf("Gyro:  %d, %d, %d\r\n", gx, gy, gz);
-
-RUN_delay_ms(100);
-}
+        // 打印数据 (需要重定向 printf)
+        printf("Accel: %d, %d, %d\r\n", ax, ay, az);
+        printf("Gyro:  %d, %d, %d\r\n", gx, gy, gz);
+      
+        RUN_delay_ms(100);
+    }
 }
 ```
 
@@ -2451,9 +2431,9 @@ float MPU6050_Get_Temp(RUN_MPU6050_t *mpu);
 
 * 本驱动仅提供**原始数据 (Raw Data)** 读写。
 * 如果你需要直接获取 **欧拉角 (Roll, Pitch, Yaw)**，你需要：
+  1. 自己编写互补滤波或卡尔曼滤波算法。
+  2. 或者移植 InvenSense 官方的 DMP (Digital Motion Processor) 库（代码量巨大，不在本轻量级驱动范围内）。
 
-1. 自己编写互补滤波或卡尔曼滤波算法。
-2. 或者移植 InvenSense 官方的 DMP (Digital Motion Processor) 库（代码量巨大，不在本轻量级驱动范围内）。
 
 # STM32 W25Q64 Flash 存储驱动模块使用说明
 
@@ -2480,12 +2460,9 @@ W25Q64 总容量 8MB (64M-bit)，地址范围 0x000000 \~ 0x7FFFFF。内部层�
 
 1. **块 (Block)**：共 128 个，每个 64KB。
 2. **扇区 (Sector)**：每个块分 16 个扇区，每个 **4KB** (4096字节)。
-
-* *注意：扇区是最小的“擦除”单位。*
-
+   * *注意：扇区是最小的“擦除”单位。*
 3. **页 (Page)**：每个扇区分 16 页，每个 **256字节**。
-
-* *注意：页是“写入”的基本操作单位。*
+   * *注意：页是“写入”的基本操作单位。*
 
 ## 3. 快速上手示例
 
@@ -2501,22 +2478,22 @@ W25Q64 总容量 8MB (64M-bit)，地址范围 0x000000 \~ 0x7FFFFF。内部层�
 
 void Main_Init(void)
 {
-// 1. 初始化 SPI 硬件接口 (SPI2: SCK=PB13, MISO=PB14, MOSI=PB15)
-RUN_SPI_Init(RUN_SPI_2_PB13_PB14_PB15);
+    // 1. 初始化 SPI 硬件接口 (SPI2: SCK=PB13, MISO=PB14, MOSI=PB15)
+    RUN_SPI_Init(RUN_SPI_2_PB13_PB14_PB15);
 
-// 2. 初始化 W25Q64 驱动
-// 参数：使用哪个SPI口, 片选端口, 片选引脚
-RUN_W25Q_Init(RUN_SPI_2_PB13_PB14_PB15, GPIOB, GPIO_Pin_12);
+    // 2. 初始化 W25Q64 驱动
+    // 参数：使用哪个SPI口, 片选端口, 片选引脚
+    RUN_W25Q_Init(RUN_SPI_2_PB13_PB14_PB15, GPIOB, GPIO_Pin_12);
 
-// 3. 读取芯片 ID 验证连接
-// W25Q64 的 ID 通常为 0xEF16 (厂商EF, 容量16)
-uint16_t flash_id = RUN_W25Q_ReadID();
-
-if (flash_id == 0xEF16) {
-printf("W25Q64 Detected!\n");
-} else {
-printf("Flash Error! ID: %04X\n", flash_id);
-}
+    // 3. 读取芯片 ID 验证连接
+    // W25Q64 的 ID 通常为 0xEF16 (厂商EF, 容量16)
+    uint16_t flash_id = RUN_W25Q_ReadID();
+  
+    if (flash_id == 0xEF16) {
+        printf("W25Q64 Detected!\n");
+    } else {
+        printf("Flash Error! ID: %04X\n", flash_id);
+    }
 }
 ```
 
@@ -2533,22 +2510,22 @@ uint32_t addr = 0x000000; // 从地址 0 开始
 
 void Test_Flash_RW(void)
 {
-// 1. 擦除扇区 (4KB)
-// 写入前必须擦除！擦除该地址所在的整个 4KB 扇区
-printf("Erasing sector...\n");
-RUN_W25Q_Erase_Sector(addr); 
+    // 1. 擦除扇区 (4KB)
+    // 写入前必须擦除！擦除该地址所在的整个 4KB 扇区
+    printf("Erasing sector...\n");
+    RUN_W25Q_Erase_Sector(addr); 
 
-// 2. 写入数据
-// 驱动内部会自动处理“页写入”的分包逻辑
-printf("Writing data...\n");
-RUN_W25Q_Write(write_buf, addr, sizeof(write_buf));
+    // 2. 写入数据
+    // 驱动内部会自动处理“页写入”的分包逻辑
+    printf("Writing data...\n");
+    RUN_W25Q_Write(write_buf, addr, sizeof(write_buf));
 
-// 3. 读取数据
-printf("Reading data...\n");
-RUN_W25Q_Read(read_buf, addr, sizeof(write_buf));
+    // 3. 读取数据
+    printf("Reading data...\n");
+    RUN_W25Q_Read(read_buf, addr, sizeof(write_buf));
 
-// 验证
-printf("Read Content: %s\n", read_buf);
+    // 验证
+    printf("Read Content: %s\n", read_buf);
 }
 ```
 
