@@ -177,3 +177,43 @@ void RUN_IMU_Reset(void)
     eyInt = 0.0f; 
     ezInt = 0.0f;
 }
+//*********************************************************************************************************************************************************
+// ================== 参数设置 ==================
+#define CF_DT       0.005f         // 采样周期 5ms (秒)，必须与调用频率一致！
+#define CF_ALPHA    0.98f          // 权重：0.98 信赖陀螺仪，0.02 信赖加速度计
+
+// ================== 静态变量 ==================
+static float cf_roll = 0.0f;
+static float cf_pitch = 0.0f;
+static float cf_yaw = 0.0f;
+
+// ================== 核心函数 ==================
+/**
+ * @brief 互补滤波计算角度
+ * @param ax, ay, az : 加速度实际值 (g)
+ * @param gx, gy, gz : 角速度实际值 (度/秒)
+ * @param roll, pitch, yaw : 输出角度指针
+ */
+void RUN_CF_Update(float ax, float ay, float az, float gx, float gy, float gz, float *roll, float *pitch, float *yaw)
+{
+    // 1. 计算加速度计观测到的角度 (由弧度转为度)
+    // Roll (横滚): 绕X轴
+    float acc_roll = atan2f(ay, az) * RAD_TO_DEG;
+    // Pitch (俯仰): 绕Y轴 (注意 ax 取反符合右手定则)
+    float acc_pitch = atan2f(-ax, sqrtf(ay * ay + az * az)) * RAD_TO_DEG;
+
+    // 2. 互补融合
+    // 公式：Angle = α * (Old_Angle + Gyro * dt) + (1-α) * Acc_Angle
+    cf_roll  = CF_ALPHA * (cf_roll  + gx * CF_DT) + (1.0f - CF_ALPHA) * acc_roll;
+    cf_pitch = CF_ALPHA * (cf_pitch + gy * CF_DT) + (1.0f - CF_ALPHA) * acc_pitch;
+
+    // 3. Yaw (航向): 纯积分，无法用加速度计修正
+    cf_yaw   += gz * CF_DT;
+
+    // 4. 输出
+    *roll  = cf_roll;
+    *pitch = cf_pitch;
+    *yaw   = cf_yaw;
+}
+
+

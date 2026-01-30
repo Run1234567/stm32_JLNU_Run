@@ -26,6 +26,6 @@ MPU6050_Get_Accel_Real(&my_mpu, &ax, &ay, &az);
 
 // 4. 读取角速度 (原始值)
 MPU6050_Get_Gyro_Real(&my_mpu, &gx, &gy, &gz);
-RUN_IMU_Update(ax, ay, az, gx, gy, gz, &Roll, &Pitch, &Yaw);
+RUN_CF_Update(ax, ay, az, gx, gy, gz, &Roll, &Pitch, &Yaw);
 
 }

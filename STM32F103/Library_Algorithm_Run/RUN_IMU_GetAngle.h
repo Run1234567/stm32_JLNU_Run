@@ -29,4 +29,7 @@ void RUN_IMU_Update(float ax, float ay, float az,
  */
 void RUN_IMU_Reset(void);
 
+										
+void RUN_CF_Update(float ax, float ay, float az, float gx, float gy, float gz, float *roll, float *pitch, float *yaw);
+										
 #endif
