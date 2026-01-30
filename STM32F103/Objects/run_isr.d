@@ -53,3 +53,4 @@
 .\objects\run_isr.o: .\Library_Device_RUN\RUN_Moter_Brushed.h
 .\objects\run_isr.o: .\Library_Device_RUN\RUN_Moter_Stepper.h
 .\objects\run_isr.o: .\Library_Algorithm_RUN\RUN_IMU_GetAngle.h
+.\objects\run_isr.o: .\Library_Algorithm_RUN\RUN_PID.h

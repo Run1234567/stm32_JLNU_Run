@@ -14,7 +14,6 @@ int main(void)
 	RUN_timer_init(RUN_TIM6,5);
 	while (1)
 	{
-
 RUN_delay_ms(5);		printf("Accel: %.3f, %.3f, %.3f,", ax, ay, az);
 printf("%.3f, %.3f, %.3f,", gx, gy, gz);		printf("%.2f,%.2f,%.2f\n", Roll, Pitch, Yaw);
 	}
