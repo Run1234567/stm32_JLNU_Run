@@ -49,6 +49,7 @@
 ".\objects\run_moter_stepper.o"
 ".\objects\run_imu_getangle.o"
 ".\objects\run_pid.o"
+".\objects\run_str.o"
 --strict --scatter ".\Objects\Project.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

@@ -12,7 +12,7 @@
 /* 2. 再包含自己的模块库 */
 #include "RUN_Gpio.h"
 #include "RUN_UART.h"
-#include "RUN_Isr.h" // 这里包含了变量声明
+#include "RUN_Isr.h" 
 #include "RUN_Timer.h"
 #include "RUN_PWM.h"
 #include "RUN_Delay.h"

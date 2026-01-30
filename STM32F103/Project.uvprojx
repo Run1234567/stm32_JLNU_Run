@@ -914,6 +914,16 @@
               <FileType>5</FileType>
               <FilePath>.\Library_Algorithm_Run\RUN_PID.h</FilePath>
             </File>
+            <File>
+              <FileName>RUN_Str.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library_Algorithm_Run\RUN_Str.c</FilePath>
+            </File>
+            <File>
+              <FileName>RUN_Str.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library_Algorithm_Run\RUN_Str.h</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
