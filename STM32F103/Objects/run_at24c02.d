@@ -52,3 +52,4 @@
 .\objects\run_at24c02.o: .\Library_Device_RUN\RUN_DS18B20.h
 .\objects\run_at24c02.o: .\Library_Device_RUN\RUN_Moter_Brushed.h
 .\objects\run_at24c02.o: .\Library_Device_RUN\RUN_Moter_Stepper.h
+.\objects\run_at24c02.o: .\Library_Algorithm_RUN\RUN_IMU_GetAngle.h

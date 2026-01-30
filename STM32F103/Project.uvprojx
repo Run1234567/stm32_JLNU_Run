@@ -340,7 +340,7 @@
               <MiscControls>--diag_suppress=1</MiscControls>
               <Define>STM32F10X_HD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>.\Start;.\User;.\Library;.\Library_RUN;.\Library_Device_RUN</IncludePath>
+              <IncludePath>.\Start;.\User;.\Library;.\Library_RUN;.\Library_Device_RUN;.\Library_Algorithm_RUN</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -888,6 +888,21 @@
               <FileName>RUN_Moter_Stepper.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Library_Device_RUN\RUN_Moter_Stepper.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Library_Algorithm_Run</GroupName>
+          <Files>
+            <File>
+              <FileName>RUN_IMU_GetAngle.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library_Algorithm_Run\RUN_IMU_GetAngle.c</FilePath>
+            </File>
+            <File>
+              <FileName>RUN_IMU_GetAngle.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library_Algorithm_Run\RUN_IMU_GetAngle.h</FilePath>
             </File>
           </Files>
         </Group>

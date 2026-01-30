@@ -28,6 +28,11 @@
 #define MPU_PWR_MGMT_1      0x6B  // 电源管理1 (复位/唤醒)
 #define MPU_WHO_AM_I        0x75  // 器件ID (默认0x68)
 
+// 加速度量程 ±2g (默认) -> 16384 LSB/g
+#define MPU_ACCEL_SENSITIVITY  16384.0f 
+
+#define MPU_GYRO_SENSITIVITY   16.4f
+
 // ==========================================================
 // 2. 对象结构体定义 (支持多设备)
 // ==========================================================
@@ -48,5 +53,7 @@ void MPU6050_Init(RUN_MPU6050_t *mpu, RUN_GPIO_enum scl, RUN_GPIO_enum sda, uint
 void MPU6050_Get_Accel(RUN_MPU6050_t *mpu, int16_t *ax, int16_t *ay, int16_t *az);
 void MPU6050_Get_Gyro (RUN_MPU6050_t *mpu, int16_t *gx, int16_t *gy, int16_t *gz);
 float MPU6050_Get_Temp(RUN_MPU6050_t *mpu);
+void MPU6050_Get_Accel_Real(RUN_MPU6050_t *mpu, float *val_x, float *val_y, float *val_z);
+void MPU6050_Get_Gyro_Real(RUN_MPU6050_t *mpu, float *val_x, float *val_y, float *val_z);
 
 #endif

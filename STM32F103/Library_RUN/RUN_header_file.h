@@ -33,4 +33,6 @@
 #include "RUN_Moter_Brushed.h"
 #include "RUN_Moter_Stepper.h"
 
+
+#include "RUN_IMU_GetAngle.h"
 #endif

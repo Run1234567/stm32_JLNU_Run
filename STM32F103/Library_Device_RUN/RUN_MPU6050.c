@@ -114,6 +114,46 @@ void MPU6050_Get_Gyro(RUN_MPU6050_t *mpu, int16_t *gx, int16_t *gy, int16_t *gz)
 }
 
 /**
+  * @brief  读取三轴加速度实际值 (单位: g)
+  * @param  mpu: MPU6050 对象句柄
+  * @param  val_x: 返回 X 轴加速度 (float)
+  * @param  val_y: 返回 Y 轴加速度 (float)
+  * @param  val_z: 返回 Z 轴加速度 (float)
+  */
+void MPU6050_Get_Accel_Real(RUN_MPU6050_t *mpu, float *val_x, float *val_y, float *val_z)
+{
+    int16_t raw_x, raw_y, raw_z;
+    
+    // 1. 先读取原始 16位 整数数据
+    MPU6050_Get_Accel(mpu, &raw_x, &raw_y, &raw_z);
+    
+    // 2. 转化为实际物理量 (除以灵敏度)
+    *val_x = (float)raw_x / MPU_ACCEL_SENSITIVITY;
+    *val_y = (float)raw_y / MPU_ACCEL_SENSITIVITY;
+    *val_z = (float)raw_z / MPU_ACCEL_SENSITIVITY;
+}
+
+/**
+  * @brief  读取三轴角速度实际值 (单位: 度/秒)
+  * @param  mpu: MPU6050 对象句柄
+  * @param  val_x: 返回 X 轴角速度 (float)
+  * @param  val_y: 返回 Y 轴角速度 (float)
+  * @param  val_z: 返回 Z 轴角速度 (float)
+  */
+void MPU6050_Get_Gyro_Real(RUN_MPU6050_t *mpu, float *val_x, float *val_y, float *val_z)
+{
+    int16_t raw_x, raw_y, raw_z;
+    
+    // 1. 先读取原始 16位 整数数据
+    MPU6050_Get_Gyro(mpu, &raw_x, &raw_y, &raw_z);
+    
+    // 2. 转化为实际物理量 (除以灵敏度)
+    *val_x = (float)raw_x / MPU_GYRO_SENSITIVITY;
+    *val_y = (float)raw_y / MPU_GYRO_SENSITIVITY;
+    *val_z = (float)raw_z / MPU_GYRO_SENSITIVITY;
+}
+
+/**
   * @brief  读取芯片内部温度
   * @param  mpu: MPU6050 对象句柄
   * @retval float: 温度值 (单位：摄氏度 ℃)
