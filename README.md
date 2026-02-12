@@ -1044,7 +1044,7 @@ void RUN_DAC_Set_Value(RUN_DAC_Channel_t channel, uint16_t val);
 
 * 代码中写死计算基准为 `3.3f`。如果你的板子 VDDA/Vref+ 接的是 3.0V 或 2.5V，请修改 `RUN_DAC.c` 中的计算公式。
 
-# TM32 硬件 SPI 驱动模块使用说明
+# STM32 硬件 SPI 驱动模块使用说明
 
 本模块支持 SPI1、SPI2 和 SPI3 的多种引脚组合。驱动会自动处理时钟开启、GPIO 复用配置以及 AFIO 重映射。
 
@@ -2518,14 +2518,11 @@ W25Q64 总容量 8MB (64M-bit)，地址范围 0x000000 \~ 0x7FFFFF。内部层�
 
 void Main_Init(void)
 {
-// 1. 初始化 SPI 硬件接口 (SPI2: SCK=PB13, MISO=PB14, MOSI=PB15)
-RUN_SPI_Init(RUN_SPI_2_PB13_PB14_PB15);
-
-// 2. 初始化 W25Q64 驱动
+// 初始化 W25Q64 驱动
 // 参数：使用哪个SPI口, 片选端口, 片选引脚
 RUN_W25Q_Init(RUN_SPI_2_PB13_PB14_PB15, GPIOB, GPIO_Pin_12);
 
-// 3. 读取芯片 ID 验证连接
+// 读取芯片 ID 验证连接
 // W25Q64 的 ID 通常为 0xEF16 (厂商EF, 容量16)
 uint16_t flash_id = RUN_W25Q_ReadID();
 
