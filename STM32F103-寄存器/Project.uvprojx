@@ -824,6 +824,16 @@
               <FileType>5</FileType>
               <FilePath>.\Library_RUN\RUN_DMA.h</FilePath>
             </File>
+            <File>
+              <FileName>RUN_CAN.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library_RUN\RUN_CAN.c</FilePath>
+            </File>
+            <File>
+              <FileName>RUN_CAN.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library_RUN\RUN_CAN.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

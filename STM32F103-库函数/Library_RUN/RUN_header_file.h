@@ -24,7 +24,7 @@
 #include "RUN_SPI.h"
 #include "RUN_OneWire.h"
 #include "RUN_DMA.h"
-
+#include "RUN_CAN.h"
 
 #include "RUN_MPU6050.h"
 #include "RUN_AT24C02.h"

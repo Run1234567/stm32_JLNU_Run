@@ -46,6 +46,7 @@
 .\objects\main.o: .\Library_RUN\RUN_SPI.h
 .\objects\main.o: .\Library_RUN\RUN_OneWire.h
 .\objects\main.o: .\Library_RUN\RUN_DMA.h
+.\objects\main.o: .\Library_RUN\RUN_CAN.h
 .\objects\main.o: .\Library_Device_RUN\RUN_MPU6050.h
 .\objects\main.o: .\Library_Device_RUN\RUN_AT24C02.h
 .\objects\main.o: .\Library_Device_RUN\RUN_W25Q64.h

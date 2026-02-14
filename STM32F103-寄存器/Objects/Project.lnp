@@ -41,6 +41,7 @@
 ".\objects\run_onewire.o"
 ".\objects\run_dac.o"
 ".\objects\run_dma.o"
+".\objects\run_can.o"
 ".\objects\run_mpu6050.o"
 ".\objects\run_at24c02.o"
 ".\objects\run_w25q64.o"

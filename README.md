@@ -73,6 +73,7 @@
 - [STM32 单总线 (OneWire) 驱动模块使用说明](#stm32-单总线-onewire-驱动模块使用说明)
 - [STM32 内部 Flash 模拟 EEPROM 驱动模块使用说明](#stm32-内部-flash-模拟-eeprom-驱动模块使用说明)
 - [STM32 DMA 数据搬运驱动模块使用说明](#stm32-dma-数据搬运驱动模块使用说明)
+- [STM32 CAN 通信驱动模块使用说明](#stm32-can-通信驱动模块使用说明)
 - [STM32 AT24C02 (EEPROM) 驱动模块使用说明](#stm32-at24c02-eeprom-驱动模块使用说明)
 - [STM32 DS18B20 温度传感器驱动模块使用说明](#stm32-ds18b20-温度传感器驱动模块使用说明)
 - [STM32 直流有刷电机 (小车底盘) 驱动模块使用说明](#stm32-直流有刷电机驱动模块使用说明)
@@ -1807,6 +1808,177 @@ STM32F103 的 DMA 通道是固定的，**不能随意连接**。请根据下表�
 
 * 本驱动代码中包含了 `RUN_DMA_Config`，它内部会自动处理时钟开启吗？查看代码片段，它似乎专注于寄存器配置。**建议在初始化代码中确保 `RCC_AHBPeriph_DMA1` 时钟已开启**。通常 `RUN_DMA_Config` 的完整实现会包含时钟开启，如果没包含，请手动调用 `RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);`。
 
+# STM32 CAN 通信驱动模块使用说明
+
+本模块提供了一个基于 **寄存器直接操作** 的高性能 CAN 总线驱动接口。它解决了 STM32 CAN 配置中复杂的波特率计算、过滤器配置和引脚重映射问题，实现了“一行代码初始化，一行代码发送”。
+
+## 1. 核心特性
+
+* **极速响应**：底层完全采用寄存器位操作（摒弃标准库冗长的检查流程），大幅提高发送吞吐量和中断响应速度。
+* **智能配置**：内置波特率计算公式（基于 APB1=36MHz），无需手动计算 BS1/BS2/Prescaler，直接填 `500000` 即可。
+* **一键重映射**：通过枚举（如 `CAN1_RX_PB8_TX_PB9`）自动处理 AFIO 和 GPIO 配置，无需查阅数据手册。
+* **过滤器简化**：提供“全通”、“掩码”、“列表”三种预设模式，轻松实现 ID 过滤。
+
+## 2. 快速上手
+
+### 2.1 典型场景 1：基础收发 (回环测试/正常通讯)
+
+初始化 CAN 总线为 500Kbps，使用 PA11/PA12 引脚，接收所有报文。
+
+**C**
+
+**C**
+
+```
+#include "RUN_CAN.h"
+#include "RUN_Delay.h" // 用于延时
+
+int main(void)
+{
+    // 1. 初始化 CAN
+    // 引脚: PA11/PA12 (默认)
+    // 波特率: 500k
+    // 模式: 正常模式 (RUN_CAN_MODE_NORMAL)
+    // 过滤器: 接收所有ID (RUN_CAN_FILTER_ALL)
+    RUN_can_init(CAN1_RX_PA11_TX_PA12, 500000, RUN_CAN_MODE_NORMAL, RUN_CAN_FILTER_ALL, 0, 0);
+
+    uint8_t send_data[8] = {0x01, 0x02, 0x03, 0x04, 0x55, 0xAA, 0x00, 0xFF};
+
+    while (1)
+    {
+        // --- 发送部分 ---
+        // 向 ID 0x123 发送 8 字节数据
+        if(RUN_can_send_msg(CAN1_RX_PA11_TX_PA12, 0x123, send_data, 8))
+        {
+            // 发送成功
+        }
+
+        // --- 接收部分 (查询标志位) ---
+        // 当中断发生时，CAN_Rx_Flag 会自动置 1
+        if(CAN_Rx_Flag == 1)
+        {
+            // 数据已自动存入全局数组 CAN_Rx_Buffer
+            // 处理收到的数据...
+            uint8_t d0 = CAN_Rx_Buffer[0];
+            uint8_t d1 = CAN_Rx_Buffer[1];
+          
+            // 清除标志位，准备下一次接收
+            CAN_Rx_Flag = 0;
+        }
+      
+        Delay_ms(100);
+    }
+}
+```
+
+### 2.2 典型场景 2：特定 ID 过滤 (只听命令)
+
+假设你的设备 ID 是 `0x088`，你只想接收发给自己的报文，屏蔽总线上的其他干扰。
+
+**C**
+
+**C**
+
+```
+#include "RUN_CAN.h"
+
+int main(void)
+{
+    // 初始化配置：列表模式 (FILTER_LIST)
+    // 只接收 ID = 0x088 的报文
+    // 最后一个参数 0 在列表模式下可作为第二个允许的 ID
+    RUN_can_init(CAN1_RX_PB8_TX_PB9, 250000, RUN_CAN_MODE_NORMAL, RUN_CAN_FILTER_LIST, 0x088, 0);
+
+    while (1)
+    {
+        if(CAN_Rx_Flag == 1)
+        {
+            // 能进这里，说明收到的 ID 绝对是 0x088
+            // 执行相关命令...
+            CAN_Rx_Flag = 0;
+        }
+    }
+}
+```
+
+---
+
+## 3. API 接口详解
+
+### 3.1 初始化 `RUN_can_init`
+
+**C**
+
+**C**
+
+```
+void RUN_can_init(CAN_PIN_enum can_pin, 
+                  uint32 baud_rate, 
+                  RUN_CAN_MODE_enum can_mode, 
+                  RUN_CAN_FILTER_enum filter_mode, 
+                  uint32 f_id, 
+                  uint32 f_mask);
+```
+
+* **can\_pin**: 引脚方案选择 (见下文速查表)。
+* **baud\_rate**: 波特率直接数值，如 `500000` (500k), `250000` (250k), `1000000` (1M)。
+* **can\_mode**:
+  * `RUN_CAN_MODE_NORMAL`: 正常通讯模式 (需要接 CAN 收发器)。
+  * `RUN_CAN_MODE_LOOPBACK`: 回环模式 (自发自收，用于无硬件调试)。
+* **filter\_mode**:
+  * `RUN_CAN_FILTER_ALL`: 全通。忽略 `f_id` 和 `f_mask`，接收一切。
+  * `RUN_CAN_FILTER_MASK`: 掩码模式。`f_id` 为目标值，`f_mask` 为关心的位 (1为关心)。
+  * `RUN_CAN_FILTER_LIST`: 列表模式。`f_id` 和 `f_mask` 分别代表两个允许通过的准确 ID。
+* **f\_id / f\_mask**: 过滤器参数 (标准帧 ID)。
+
+### 3.2 发送报文 `RUN_can_send_msg`
+
+**C**
+
+**C**
+
+```
+uint8_t RUN_can_send_msg(CAN_PIN_enum can_pin, uint32 id, uint8* msg, uint8 len);
+```
+
+* **id**: 目标设备的标准 ID (Standard ID, 11-bit)。
+* **msg**: 数据指针 (数组首地址)。
+* **len**: 数据长度 (0\~8)。
+* **返回值**: `1` 表示发送成功 (放入邮箱并传输完成)，`0` 表示失败 (超时或无空闲邮箱)。
+
+### 3.3 全局变量 (接收用)
+
+* `uint8_t CAN_Rx_Buffer[8]`: 存放最新接收到的 8 字节数据。
+* `volatile uint8_t CAN_Rx_Flag`: 接收标志位。收到数据置 1，**需要用户在处理完数据后手动清 0**。
+
+---
+
+## 4. 引脚方案速查表 (Cheat Sheet)
+
+本驱动已内置重映射逻辑，请根据硬件连接选择对应的枚举值：
+
+
+| **枚举名称 (CAN\_PIN\_enum)** | **RX 引脚** | **TX 引脚** | **说明**                                                                     |
+| ----------------------------- | ----------- | ----------- | ---------------------------------------------------------------------------- |
+| **CAN1\_RX\_PA11\_TX\_PA12**  | PA11        | PA12        | **默认引脚**。<br/>注意：PA11/12 也是 USB 引脚，CAN 与 USB**不能同时使用**。 |
+| **CAN1\_RX\_PB8\_TX\_PB9**    | PB8         | PB9         | **重映射方案 1**。<br/>常见于正点原子、野火等开发板。                        |
+| **CAN1\_RX\_PD0\_TX\_PD1**    | PD0         | PD1         | **重映射方案 2**。<br/>仅部分大容量封装芯片支持。                            |
+
+---
+
+## 5. 注意事项 (Pitfalls)
+
+1. **收发器 (Transceiver) 必不可少**：
+   * CAN 总线是差分信号。STM32 引脚出来的只是 TTL 电平 (CAN\_TX/RX)，**必须** 接 TJA1050、VP230 等 CAN 收发器芯片才能连接到物理总线。直接把两个 STM32 的引脚连在一起是无法通信的 (除非用回环模式)。
+2. **终端电阻**：
+   * CAN 总线两端通常需要并联 **120Ω** 的终端电阻，否则高速通讯时极易丢包。
+3. **中断优先级**：
+   * 初始化函数内部配置了 `USB_LP_CAN1_RX0_IRQn` 的优先级 (Preemption=1, Sub=1)。如果你的工程使用了 FreeRTOS 或其他对优先级敏感的组件，请检查是否冲突。
+4. **标准 ID 支持**：
+   * 目前的驱动主要针对 **标准帧 (Standard ID, 11-bit)** 进行了优化。如果需要发送扩展帧 (29-bit)，需要修改 `TIR` 寄存器的写入逻辑。
+5. **时钟源假设**：
+   * 波特率计算默认系统时钟配置正确，且 APB1 总线时钟为 **36MHz** (STM32F103 标准配置)。如果你的系统时钟被超频或降频，波特率计算会有偏差。
+
 # STM32 AT24C02 (EEPROM) 驱动模块使用说明
 
 本模块用于驱动常见的 2Kbit (256字节) 串行 EEPROM 芯片 AT24C02。它封装了底层 I2C 通信细节和 EEPROM 特有的“写入周期”等待逻辑，确保数据安全写入。
@@ -2759,7 +2931,6 @@ void RUN_IMU_Reset(void);
 
 * 正常。这是加速度计的白噪声引起的。可以通过降低 `Kp` (Mahony) 或增大 `CF_ALPHA` (互补滤波) 来抑制，但会牺牲一定的动态响应速度。
 
-
 # STM32 PID 控制算法模块使用说明
 
 ## 1. 模块简介 (Overview)
@@ -3072,7 +3243,7 @@ void Parse_Servo_Cmd(char *rx_buffer)
         printf("Servo 1: %d\n", angles[0]); // 90
         printf("Servo 2: %d\n", angles[1]); // 45
         printf("Servo 3: %d\n", angles[2]); // -30
-      
+    
         // 执行电机控制...
         // Motor_Set(1, angles[0]);
     }
@@ -3109,7 +3280,7 @@ void Parse_PID_Cmd(char *rx_buffer)
         MyPID.kp = params[0]; // 12.5
         MyPID.ki = params[1]; // 0.05
         MyPID.kd = params[2]; // 8.0
-      
+    
         // Update_PID_Settings();
     }
 }
